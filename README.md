@@ -1,2 +1,2 @@
 # evaluation_adminitrator
-教学评估系统_管理员端
+教学评估系统_前端_管理员界面
