@@ -45,19 +45,26 @@ const routes = [
   }
 ]
 
-// 禁止在没有登录的情况下直接输入地址进行访问
-// routes.beforeEach((to, from, next) => {
-//   可以在路由元信息指定哪些页面需要登录权限
-//   const islogin = false // 假设没有登录（这里应从接口获取）
-//   if (to.meta.requiresAuth && !islogin) { // 需要登录授权，这里还需要判断是否登录
-//     next('/login') // 跳转到登录
-//     return
-//   }
-//   next()
-// })
-
 const router = new VueRouter({
   routes
+})
+
+// 挂载路由导航守卫
+router.beforeEach((to, from, next) => {
+	// to 将要访问的路径
+	// from 从哪个路径跳转而来
+	// next 是一个函数，表示放行 next()放行、next('/login') 强制跳转
+	if (to.path === '/login' || to.path === '/initpwd' || to.path === '/roleerr') return next() // 登录页直接放行
+	// 获取token
+	const tokenStr = window.sessionStorage.getItem('token')
+	if (!tokenStr) return next('/login')
+
+	//不同角色访问守卫
+	const role_id = window.sessionStorage.getItem('role_id')
+	if(role_id !== '1'){
+    return next('/login')
+  }
+	next()
 })
 
 // routes.addRoutes(router)

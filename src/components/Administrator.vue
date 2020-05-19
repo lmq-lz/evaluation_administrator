@@ -139,11 +139,9 @@ export default {
     // sessionStorage存储数据过程
     var userInfo = { id: 1, name: 'admin123' }
     window.sessionStorage.setItem('user', JSON.stringify(userInfo))
-    // this.adminName = window.sessionStorage.getItem('user').name
-    var getUserInfo = JSON.parse(window.sessionStorage.getItem('user'))
-    this.adminName = getUserInfo.name
-    // alert(this.adminName)
-    // console.log('activePath:123465  ' + this.activePath)
+    // // this.adminName = window.sessionStorage.getItem('user').name
+    // var getUserInfo = JSON.parse(window.sessionStorage.getItem('user'))
+    this.adminName = window.sessionStorage.getItem('username')
   },
   methods: {
     logout () {
