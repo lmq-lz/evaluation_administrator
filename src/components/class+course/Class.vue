@@ -418,7 +418,6 @@ export default {
       if (confirmResult !== 'confirm') {
         return this.$message.info('已取消删除！123')
       }
-      // 问题！！！！！！！！！答辩前需更改正确路径
       await this.$http.delete('/classe/deleteClass/{id}?id=' + id)
         .then(res => {
           if (res.status !== 200) {

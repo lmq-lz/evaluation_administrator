@@ -34,7 +34,7 @@ import {
   Loading,
   Tabs,
   TabPane,
-  Footer
+  Footer,
   DatePicker
 } from 'element-ui'
 
