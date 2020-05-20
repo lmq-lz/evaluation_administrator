@@ -30,18 +30,6 @@
           <!-- border：表格边框线，stripe：隔
             行变色 -->
             <el-table :data="courseList" border stripe>
-              <!-- <el-table-column type="expand">
-                <template slot-scope="scope">
-                  <el-row v-for="(item,index) in scope.row.permissions" :key="index">
-                    <el-col :span="15">
-                      <el-tag closable @close="deletePerms(item.id,scope.row.id)">权限名称{{index+1}}：{{item.name}}</el-tag>
-                    </el-col>
-                    <el-col :span="7">
-                      <el-button type="danger" icon="el-icon-delete" size='mini' @click="deletePerms(item.id,scope.row.id)">删除权限</el-button>
-                    </el-col>
-                  </el-row>
-                </template>
-              </el-table-column> -->
               <!-- 索引列 -->
               <el-table-column type="index" label="序号"></el-table-column>
               <el-table-column label="课程id" prop="id"></el-table-column>
@@ -49,6 +37,13 @@
               <el-table-column label="课程代码" prop="number"></el-table-column>
               <el-table-column label="课程类型" prop="courseType">
               </el-table-column>
+              <el-table-column label="开课学院" column-key="courseDep" prop="courseDep"
+                :filters="departmentListFilterArr"
+                :filter-method="filterDepHandler">
+              </el-table-column>
+              <!-- <el-table-column label="开课学院" prop="courseDep"></el-table-column> -->
+              <el-table-column label="学分" prop="score"></el-table-column>
+              <el-table-column label="学时" prop="time"></el-table-column>
               <el-table-column label="课程种类" prop="courseClass">
                 <template slot-scope="scope">
                   <el-tag
@@ -58,14 +53,11 @@
                   </el-tag>
                 </template>
               </el-table-column>
-              <el-table-column label="开课学院" prop="courseDep"></el-table-column>
-              <el-table-column label="学分" prop="score"></el-table-column>
-              <el-table-column label="学时" prop="time"></el-table-column>
-              <el-table-column label="授课教师" prop="teacher.name">
+              <!-- <el-table-column label="授课教师" prop="teacher.name">
                 <template slot-scope="scope">
                   <el-tag type='danger' disable-transitions>{{scope.row.teacher.name}}</el-tag>
                 </template>
-              </el-table-column>
+              </el-table-column> -->
               <!-- <el-table-column label="权限名称" prop="permission"></el-table-column> -->
               <el-table-column label="操作" width="350px">
                 <template slot-scope="scope">
@@ -98,10 +90,10 @@
           <!-- 内容主体区域 -->
           <el-form :model="addCourseForm" :rules="addCourseFormRules" ref="addCourseFormRef" label-width="70px">
               <!-- prop是验证规则rules(即addCourseFormRules)的属性 -->
-              <el-form-item label="课程id" prop="course_id">
-                  <!-- v-model数据双向绑定，同步到addCourseForm -->
+              <!-- v-model数据双向绑定，同步到addCourseForm -->
+              <!-- <el-form-item label="课程id" prop="id">
                 <el-input v-model.number="addCourseForm.id"></el-input>
-              </el-form-item>
+              </el-form-item> -->
               <el-form-item label="课程代码" prop="number">
                   <el-input v-model="addCourseForm.number"></el-input>
               </el-form-item>
@@ -115,7 +107,17 @@
                   <el-input v-model="addCourseForm.courseClass"></el-input>
               </el-form-item>
               <el-form-item label="开课学院" prop="courseDep">
-                <el-input v-model="addCourseForm.courseDep"></el-input>
+                <!-- <el-input v-model="addCourseForm.courseDep"></el-input> -->
+                <template>
+                  <el-select v-model="addCourseForm.department">
+                    <el-option
+                      v-for="item in departmentList"
+                      :key="item.id"
+                      :label="item.name"
+                      :value="item.id">
+                    </el-option>
+                  </el-select>
+                </template>
               </el-form-item>
               <el-form-item label="学分" prop="score">
                 <el-input v-model.number="addCourseForm.score"></el-input>
@@ -139,10 +141,10 @@
           <!-- 内容主体区域 -->
           <el-form :model="editCourseForm" :rules="editCourseFormRules" ref="editCourseFormRef" label-width="70px">
               <!-- prop是验证规则rules(即editCourseFormRules)的属性 -->
-              <el-form-item label="课程id" prop="course_id">
-                  <!-- v-model数据双向绑定，同步到editCourseForm -->
+              <!-- v-model数据双向绑定，同步到editCourseForm -->
+              <!-- <el-form-item label="课程id" prop="id">
                 <el-input v-model.number="editCourseForm.id"></el-input>
-              </el-form-item>
+              </el-form-item> -->
               <el-form-item label="课程代码" prop="number">
                   <el-input v-model="editCourseForm.number"></el-input>
               </el-form-item>
@@ -156,7 +158,16 @@
                   <el-input v-model="editCourseForm.courseClass"></el-input>
               </el-form-item>
               <el-form-item label="开课学院" prop="course_dep">
-                <el-input v-model="editCourseForm.courseDep"></el-input>
+                <template>
+                  <el-select v-model="editCourseForm.courseDep">
+                    <el-option
+                      v-for="item in departmentList"
+                      :key="item.id"
+                      :label="item.name"
+                      :value="item.name">
+                    </el-option>
+                  </el-select>
+                </template>
               </el-form-item>
               <el-form-item label="学分" prop="score">
                 <el-input v-model.number="editCourseForm.score"></el-input>
@@ -242,6 +253,12 @@ export default {
       total: 0,
       // 所有课程的列表
       courseList: [],
+      // 系列表
+      departmentList: [],
+      // 系列表过滤器
+      departmentListFilterArr: [],
+      // 所有老师列表
+      teachersList: [],
       // 控制添加课程对话框的显示与隐藏
       addCourseDialogVisible: false,
       // 控制编辑课程对话框的显示与隐藏
@@ -257,7 +274,9 @@ export default {
         courseClass: '',
         courseDep: '',
         score: 2,
-        time: 32
+        time: 32,
+        teacher: {
+        }
       },
       // 编辑课程的表单数据
       editCourseForm: {
@@ -268,11 +287,16 @@ export default {
         courseClass: '',
         courseDep: '',
         score: 2,
-        time: 32
+        time: 32,
+        teacher: {
+        },
+        department: {
+          id: 0
+        }
       },
       // 添加课程表单的验证规则
       addCourseFormRules: {
-        course_id: [
+        id: [
           {
             required: true, message: '请输入课程id', trigger: 'blur'
           },
@@ -330,15 +354,17 @@ export default {
     }
   },
   created () {
-    // sessionStorage.setItem('username', 'abc')
+    // 获得基础数据
+    this.getDepartmentList()
     this.getCourseTotal()
     this.getCourseList()
+    this.getTeacherList()
   },
   methods: {
     // 获取所有学生数量
     async getCourseTotal () {
       // 为了获取total进行axios请求(假设课程数量不超过1000)
-      await this.$http.get('/courseManage/listCourse?pageSize=1000&startPage=' + this.queryInfo.currentPage)
+      await this.$http.get('/courseManage/listCourseWithNoTeacher?pageSize=1000&startPage=' + this.queryInfo.currentPage)
         .then(res => {
           // 获取所有课程数量
           this.total = res.data.length
@@ -350,11 +376,36 @@ export default {
     },
     // 获取所有课程列表
     async getCourseList () {
-      await this.$http.get('/courseManage/listCourse?pageSize=' + this.queryInfo.pageSize + '&startPage=' + this.queryInfo.currentPage)
+      await this.$http.get('/courseManage/listCourseWithNoTeacher?pageSize=' + this.queryInfo.pageSize + '&startPage=' + this.queryInfo.currentPage)
         .then(res => {
           this.courseList = res.data
         }).catch(err => {
           console.log('获取课程列表失败！' + err)
+        })
+    },
+    // 获取所有系列表
+    async getDepartmentList () {
+      await this.$http.get('/department/listDepartment?pageSize=20&startPage=1')
+        .then(res => {
+          this.departmentList = res.data
+        }).catch(err => {
+          console.log('获取系列表失败！' + err)
+        })
+      if (this.departmentList !== null) {
+        this.departmentList.forEach( item => {
+          this.departmentListFilterArr.push({ text: item.name, value: item.name })
+        })
+      }
+    },    
+    // 获取所有教师列表(含分页参数)
+    async getTeacherList () {
+      await this.$http.get('/admin/listTeacher?pageSize=1000&startPage=' + this.queryInfo.currentPage)
+        .then(res => {
+          // 获取教师列表信息以及教师数量
+          this.teacherList = res.data
+        }).catch(err => {
+          console.log('获取教师列表失败！' + err)
+          // return this.$message.error('获取教师列表失败！')
         })
     },
     // 监听 pageSize(页面显示最多条数，在页面中可进行1,2,5,10条/页的选择) 改变的事件
@@ -383,8 +434,8 @@ export default {
       if (confirmResult !== 'confirm') {
         return this.$message.info('已取消删除！123')
       }
-      // 问题！！！！！！！！！答辩前需更改正确路径
-      await this.$http.get('/courseManage/deleteCourse?id=' + id)
+      // axio删除特定id课程
+      await this.$http.delete('/courseManage/deleteCourse/{id}?id=' + id)
         .then(res => {
           if (res.status !== 200) {
             return this.$message.error('删除课程失败！')
@@ -392,6 +443,7 @@ export default {
             console.log(res.message + '删除课程成功！')
           }
         })
+      this.getCourseList()
     },
     // 监听添加课程对话框的关闭事件
     addCourseDialogClosed () {
@@ -409,17 +461,19 @@ export default {
       this.editCourseForm = course
     },
     // 点击按钮添加课程
-    addCourse () {
-      alert('课程名：' + this.addCourseForm.name)
-      this.$refs.addCourseFormRef.validate(async valid => {
-        if (!valid) return
-        await this.$http.post('/courseManage/addCourse', this.addCourseForm)
-          .then(res => {
-            return this.$message.success('添加课程成功！')
-          }).catch(err => {
-            console.log('添加课程失败！' + err)
-          })
-      })
+    async addCourse () {
+      // alert('课程名：' + this.addCourseForm.name)
+      // this.$refs.addCourseFormRef.validate(async valid => {
+      //   if (!valid) return
+        
+      // })
+      console.log('添加课程info：', this.addCourseForm)
+      await this.$http.post('/courseManage/addCourse', this.addCourseForm)
+        .then(res => {
+          return this.$message.success('添加课程成功！')
+        }).catch(err => {
+          console.log('添加课程失败！' + err)
+        })
       // 隐藏添加课程对话框
       this.addCourseDialogVisible = false
       // 重新获取课程列表
@@ -427,16 +481,23 @@ export default {
     },
     // 修改课程
     async updateCourse () {
-      await this.$http.post('/courseManage/updateCourse', this.editCourseForm)
+      await this.$http.put('/courseManage/updateCourse', this.editCourseForm)
         .then(function (response) {
           // 重新获取课程列表
           this.getCourseList()
         }).catch(function (err) {
           console.log('编辑课程请求失败 errMsg：' + err)
         })
+      // 刷新课程
+      this.getCourseList()
       // 关闭编辑课程对话框
       this.editCourseDialogVisible = false
-    }
+    },
+    // 系名称过滤器进行筛选
+    filterDepHandler (value, row, column) {
+      // const property = column.entranceDate
+      return row.entranceDate === value
+    },
   }
 }
 </script>

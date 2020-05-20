@@ -28,7 +28,7 @@ const routes = [
   {
     path: '/Administrator',
     component: Administrator,
-    redirect: '/welcome',
+    redirect: '/student',
     children: [
       {
         path: '/welcome',

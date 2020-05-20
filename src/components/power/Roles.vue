@@ -155,6 +155,7 @@ export default {
       checkedPerms: [],
       // 未被选择(即可被分配)的权限
       uncheckedPerms: [],
+      chosenRoleId: 0,
       // 备用户选中的权限列表
       savedCheckedPerms: [],
       // 控制添加用户对话框的显示与隐藏
@@ -177,10 +178,10 @@ export default {
       },
       allotSomeRolePermsForm: {
         // 角色id
-        id: 0,
-        // 权限列表
-        permissions: {
-        }
+        // id: 0,
+        // // 权限列表
+        // permissions: {
+        // }
       }
     }
   },
@@ -271,7 +272,8 @@ export default {
     // 展示分配权限的对话框
     async showSetRightDialog (role) {
       // 分配权限表单获取被编辑角色的id
-      this.allotSomeRolePermsForm.id = role.id
+      // this.allotSomeRolePermsForm.id = role.id
+      this.chosenRoleId = role.id
       // 想法一：将所有权限展示出来，已有权限默认打钩
       // this.checkedPerms = []
       // this.savedCheckedPerms = []
@@ -390,23 +392,32 @@ export default {
     // 分配权限事件
     allotRights () {
       // const keys = []
-      console.log('被选中的权限：', this.savedCheckedPerms)
+      // console.log('被选中的权限：', this.savedCheckedPerms)
       // 向分配权限表单中添加权限列表
+      this.allotSomeRolePermsForm = []
       this.allRightsList.forEach( allRightItem => {
-        this.savedCheckedPerms.forEach( checkedPermItem => {
-          if (allRightItem.name === checkedPermsItem.name) {
-            this.allotSomeRolePermsForm.push(checkedPermsItem)
+        // console.log('所有权限：', allRightItem)
+        this.savedCheckedPerms.forEach( checkedPermsItem => {
+            // console.log('备选权限：', checkedPermsItem)
+          if (allRightItem.name === checkedPermsItem) {
+            // console.log('push:', this.allotSomeRolePermsForm)
+            this.allotSomeRolePermsForm.push(allRightItem)
           }
         })
       })
-      // ??????????????????????????????????????这里是axios请求分配某角色某权限
-      // await this.$http.post('/admin/allotPerms', this.allotSomeRolePermsForm)
-      //   .then(res => {
-      //     console.log('权限添加成功！')
-      //   }).catch(err => {
-      //     console.log('权限添加失败！' + err)
-      //     // return this.$message.error('权限添加失败！')
-      //   })
+      // console.log('分配权限：', this.allotSomeRolePermsForm)
+      // axios请求分配某角色某权限
+      this.allotSomeRolePermsForm.forEach( item => {
+        console.log('请求参数：', item)
+        this.$http.post('/admin/addRolePermission?permsId=' + item.id + '&roleId=' + this.chosenRoleId)
+        .then(res => {
+          console.log('权限添加成功！')
+        }).catch(err => {
+          console.log('权限添加失败！' + err)
+          // return this.$message.error('权限添加失败！')
+        })
+      })
+      this.getRolesList()
       // 分配权限对话框关闭
       this.setRightDialogVisible = false
     },
@@ -425,22 +436,15 @@ export default {
     },
     // 根据id删除某角色某权限(权限id，角色id)
     async deletePerms (pid, roleId) {
-      // await this.$http.get('/admin/deletePerms?id=' + pid + '&roleId=' + roleId)
-      //   .then(res => {
-      //     console.log('权限删除成功！')
-      //   }).catch(err => {
-      //     console.log('权限删除失败！' + err)
-      //     // return this.$message.error('获取角色列表失败！')
-      //   })
-      // this.getRolesList()
+      await this.$http.delete('/admin/deleteRolePermission?permsId=' + pid + '&roleId=' + roleId)
+        .then(res => {
+          console.log('权限删除成功！')
+        }).catch(err => {
+          console.log('权限删除失败！' + err)
+          // return this.$message.error('获取角色列表失败！')
+        })
+      this.getRolesList()
     },
-    // 分配权限时判断是否所有权限里面含有已分配权限
-    // inPermsArray (checkedPerms, perm) {
-    //   checkedPerms.forEach(item => {
-    //     if (item === perm) return true
-    //   })
-    //   return false
-    // },
     // 把所有权限里面删除已有权限供用户选择
     allPermsDelCheckedPerms () {
       this.uncheckedPerms = []

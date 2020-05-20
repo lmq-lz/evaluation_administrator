@@ -904,7 +904,8 @@ export default {
         }).catch(function (err) {
           console.log('修改教师信息！失败信息： errMsg—— ' + err)
         })
-      this.editDialogVisible = false
+      this.editTeacherInfoDialogVisible = false
+      this.getTeacherList()
     },
     // 入学时间过滤器进行筛选
     filterEntrDateHandler (value, row, column) {

@@ -30,24 +30,12 @@
           <!-- border：表格边框线，stripe：隔
             行变色 -->
             <el-table :data="classList" border stripe>
-              <!-- <el-table-column type="expand">
-                <template slot-scope="scope">
-                  <el-row v-for="(item,index) in scope.row.permissions" :key="index">
-                    <el-col :span="15">
-                      <el-tag closable @close="deletePerms(item.id,scope.row.id)">权限名称{{index+1}}：{{item.name}}</el-tag>
-                    </el-col>
-                    <el-col :span="7">
-                      <el-button type="danger" icon="el-icon-delete" size='mini' @click="deletePerms(item.id,scope.row.id)">删除权限</el-button>
-                    </el-col>
-                  </el-row>
-                </template>
-              </el-table-column> -->
               <!-- 索引列 -->
               <el-table-column type="index" label="序号"></el-table-column>
               <el-table-column label="班级id" prop="id"></el-table-column>
               <el-table-column label="班级名称" prop="name"></el-table-column>
               <el-table-column label="班级代码" prop="number"></el-table-column>
-              <el-table-column label="所属学院" prop="departmentName"></el-table-column>
+              <el-table-column label="所属学院" prop="department.name"></el-table-column>
               <el-table-column label="年级" prop="grade"></el-table-column>
               <!-- <el-table-column label="权限名称" prop="permission"></el-table-column> -->
               <el-table-column label="操作" width="350px">
@@ -167,7 +155,7 @@
               <el-button type="primary" @click="updateClass">完成</el-button>
           </span>
       </el-dialog>
-      <!-- 分配班级班级的对话选择框 -->
+      <!-- 分配班级课程的对话选择框 -->
       <!-- <el-dialog
       title="编辑班级"
       :visible.sync="editClassDialogVisible"
@@ -249,8 +237,6 @@ export default {
       addClassDialogVisible: false,
       // 控制编辑班级对话框的显示与隐藏
       editClassDialogVisible: false,
-      // 控制分配班级对话框的显示与隐藏
-      // editRoleDialogVisible: false,
       // 添加班级的表单数据
       addClassForm: {
         id: 0,
@@ -428,6 +414,7 @@ export default {
             console.log(res.message + '删除班级成功！')
           }
         })
+      this.getClassList()
     },
     // 监听添加班级对话框的关闭事件
     addClassDialogClosed () {

@@ -5,7 +5,7 @@
             <div>
                 <span>教务管理系统</span>
             </div>
-            <div font-size="12px">
+            <div font-size="12px" style="padding: 5px; border-radius: 10px; background-color: gray; margin: 15px;">
                 <span>管理员：{{ adminName }}</span>
             </div>
             <div>
@@ -134,6 +134,7 @@ export default {
     }
   },
   created () {
+    this.adminName = window.sessionStorage.getItem('username')
     // this.getMenuList()
     this.activePath = window.sessionStorage.getItem('activePath')
     // sessionStorage存储数据过程
@@ -177,6 +178,7 @@ export default {
 
 .el-header {
     background-color: #373D41;
+    
     display: flex;
     justify-content: space-between;
     padding-left: 20px;
@@ -191,7 +193,7 @@ export default {
 }
 
 .el-header > div > span {
-    margin-left: 15px;
+    margin: 5px;
 }
 
 .el-aside{

@@ -15,7 +15,7 @@
           <el-row :gutter="100">
               <el-col :span="7">
                   <el-input placeholder="请输入内容" v-model="queryInfo.query" clearable @clear="getStudentList">
-                      <el-button slot="append" icon="el-icon-search" @click="getStudentList"></el-button>
+                      <el-button slot="append" icon="el-icon-search" @click="searchStudnetList"></el-button>
                   </el-input>
               </el-col>
               <el-col :span="4">
@@ -29,7 +29,10 @@
               <el-table-column label="学号" prop="id"></el-table-column>
               <el-table-column label="姓名" prop="name"></el-table-column>
               <el-table-column label="籍贯" prop="region"></el-table-column>
-              <el-table-column label="性别" prop="gender" >
+              <el-table-column label="性别" prop="gender" 
+              :filters="[{text: '男', value: '男'}, {text: '女', value: '女'}]"
+              :filter-method="filterGenderHandler"
+              >
                 <template slot-scope="scope">
                   {{scope.row.gender === 0 ? '男':'女'}}
                 </template>
@@ -123,6 +126,30 @@
                 placeholder="选择月">
               </el-date-picker>
             </el-form-item>
+            <el-form-item label="系名称">
+              <template>
+                <el-select v-model="addStudentForm.aclass.departmentId">
+                  <el-option
+                    v-for="item in departmentList"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id">
+                  </el-option>
+                </el-select>
+              </template>
+            </el-form-item>
+            <el-form-item label="班级名称">
+              <template>
+                <el-select v-model="addStudentForm.aclass.id">
+                  <el-option
+                    v-for="item in classList"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id">
+                  </el-option>
+                </el-select>
+              </template>
+            </el-form-item>
           </el-form>
           <!-- footer是对话框底部区域 -->
           <span slot="footer" class="dialog-footer">
@@ -198,9 +225,33 @@
           <el-form-item label="入学时间" prop="entranceDate">
             <el-date-picker
               v-model="editStudentInfoForm.entranceDate"
-              type="month" format="yyyy-MM" value-format="yyyy-MM-dd"
+              type="month"
               placeholder="选择月">
             </el-date-picker>
+          </el-form-item>
+          <!-- <el-form-item label="系名称">
+            <template>
+              <el-select v-model="editStudentInfoForm.aclass.departmentId">
+                <el-option
+                  v-for="item in departmentList"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id">
+                </el-option>
+              </el-select>
+            </template>
+          </el-form-item> -->
+          <el-form-item label="班级名称">
+            <template>
+              <el-select v-model="editStudentInfoForm.aclass.id">
+                <el-option
+                  v-for="item in classList"
+                  :key="item.id"
+                  :label="item.name"
+                  :value="item.id">
+                </el-option>
+              </el-select>
+            </template>
           </el-form-item>
         </el-form>
           <!-- footer是对话框底部区域 -->
@@ -253,8 +304,12 @@ export default {
       ],
       // 为学生分配角色而获取的所有角色列表
       allRolesList: [],
+      // 所有班级列表
+      classList: [],
       // 性别列表
       genderList: [{ id: 0, gender: '男' }, { id: 1, gender: '女' }],
+      // 系列表
+      departmentList: [],
       // 默认性别id为0
       selectedStudentGenderId: 0,
       // 获取学生数据总条数
@@ -357,13 +412,13 @@ export default {
       },
       // 编辑学生信息的表单数据
       editStudentInfoForm: {
-        // aclass: {
-        //   departmentId: 0,
-        //   grade: "string",
-        //   id: 0,
-        //   name: "string",
-        //   number: "string"
-        // },
+        aclass: {
+          departmentId: 0,
+          grade: "string",
+          id: 0,
+          name: "string",
+          number: "string"
+        },
         birth: '2000-03-02',
         courseList: [
         ],
@@ -475,10 +530,12 @@ export default {
     }
   },
   created () {
-    // alert('加密内容：' + this.$md5('123'))
+    // 获取基本数据
     this.getAllRolesList()
     this.getStudentTotal()
     this.getStudentList()
+    this.getClassList()
+    this.getDepartmentList()
   },
   methods: {
     // 获取所有学生数量
@@ -497,16 +554,8 @@ export default {
     },
     // 获取所有学生列表(含分页参数)
     async getStudentList () {
-      //  axios请求(请求路径，请求参数)
-      // const { data: res } = await this.$http.get('/admin/listStudent', { rid: 3 })
-      // if (res.meta.status !== 200) {
-      //   const msg = this.$message.error('获取学生列表失败')
-      //   return msg
-      // }
-      // this.studentList = res.data.studentList
-      // this.total = res.data.total
-      // console.log(res)
-
+      // console.log('管理员姓名')
+      // console.log('username', window.sessionStorage.getItem('username'))
       await this.$http.get('/admin/listStudent?pageSize=' + this.queryInfo.pageSize + '&startPage=' + this.queryInfo.currentPage)
         .then(res => {
           // 获取学生列表信息以及学生数量
@@ -526,6 +575,18 @@ export default {
           item.entranceDate = item.entranceDate.substr(0, 7)
         }
       })
+    },
+    // 获取所有班级数量
+    async getClassList () {
+      // 为了获取total进行axios请求(假设班级人数不超过1000)
+      await this.$http.get('/classe/listClass?pageSize=1000&startPage=' + this.queryInfo.currentPage)
+        .then(res => {
+          // 获取所有班级
+          this.classList = res.data
+        }).catch(err => {
+          console.log('获取班级列表失败！' + err)
+          // return this.$message.error('获取学生列表失败！')
+        })
     },
     // 获取所有角色列表(可以与上面的学生列表合并请求),同时获取学生角色id
     async getAllRolesList () {
@@ -549,6 +610,15 @@ export default {
         }).catch(err => {
           console.log('获取所有角色列表失败！' + err)
           // return this.$message.error('获取所有角色列表失败！')
+        })
+    },
+    // 获取所有系列表
+    async getDepartmentList () {
+      await this.$http.get('/department/listDepartment?pageSize=20&startPage=1')
+        .then(res => {
+          this.departmentList = res.data
+        }).catch(err => {
+          console.log('获取系列表失败！' + err)
         })
     },
     // 监听 pageSize(页面显示最多条数，在页面中可进行1,2,5,10条/页的选择) 改变的事件
@@ -590,9 +660,9 @@ export default {
     // 点击按钮添加新学生
     addStudent () {
       // 入学时间和出生日期的格式化
-      const dEntrance = new Date(this.addStudentForm.entranceDate)
+      const dEntrance = new Date(this.addStudentForm.entranceDate.substr)
       this.addStudentForm.entranceDate = dEntrance.getFullYear() + '-' + this.p((dEntrance.getMonth() + 1)) + '-' + this.p(dEntrance.getDate())
-      const dBirth = new Date(this.addStudentForm.birth)
+      const dBirth = new Date(this.addStudentForm.birth.substr)
       this.addStudentForm.birth = dBirth.getFullYear() + '-' + this.p((dBirth.getMonth() + 1)) + '-' + this.p(dBirth.getDate())
       // 密码与身份证的加密
       this.addStudentForm.password = this.$md5(this.addStudentForm.passwordBeforeMD5)
@@ -625,7 +695,7 @@ export default {
         this.getStudentList()
       })
     },
-    // p为不够10添加0的函数
+    // p为不够10添加0的函数(用于日期对象)
     p(s) {
           return s < 10 ? '0' + s : s
     },
@@ -646,7 +716,7 @@ export default {
         return this.$message.info('已取消删除！123')
       }
       // console.log('确认删除学生！')
-      await this.$http.get('/admin/deleteStudent?id=' + id)
+      await this.$http.delete('/admin/deleteStudent?id=' + id)
         .then(res => {
           if (res.status !== 200) {
             return this.$message.error('删除学生失败！')
@@ -660,67 +730,30 @@ export default {
     },
     // 展示编辑角色对话框
     showeditStudentInfoDialog (student) {
-      // this.allRolesList = []
-      // this.getAllRolesList()
-      // console.log('分配角色：' + this.allRolesList[0])
-      // 保存当前操作用户的id以及其角色id
-      // this.selectedStudentId = role.id
-      // this.selectedStudentRoleId = role.roleId
+      // 学生基本信息的赋值
       this.editStudentInfoForm.aClass = student.aClass
       this.editStudentInfoForm.id = student.id
       this.editStudentInfoForm.name = student.name
       this.editStudentInfoForm.gender = student.gender
-      console.log('studnet birth', student.birth)
-      // if (student.entranceDate !== null) {
-      //   this.editStudentInfoForm.entranceDate = new Date(student.entranceDate.substr(0,10))
-      // }
-      // var dEntrance = new Date(student.entranceDate)
-      // this.editStudentInfoForm.entranceDate = dEntrance.getFullYear() + '-' + this.p((dEntrance.getMonth() + 1)) + '-' + this.p(dEntrance.getDay())
-      // var dBirth = new Date(student.birth)
-      // this.editStudentInfoForm.birth = dBirth.getFullYear() + '-' + this.p((dBirth.getMonth() + 1)) + '-' + this.p(dBirth.getDay())
-      // console.log('birth：', this.editStudentInfoForm.birth)
-      // 入学时间和出生日期的格式化
-      // const dEntrance = new Date(student.entranceDate)
-      // dEntrance.setTime(dEntrance.getTime() + 3600 * 1000 * 24)
-      // this.editStudentInfoForm.entranceDate = dEntrance.getFullYear() + '-' + this.p((dEntrance.getMonth() + 1)) + '-' + this.p((dEntrance.getDate() + 1))
-      // const dBirth = new Date(student.birth)
-      // console.log('dBirth', dBirth)
-      // dBirth.setTime(dBirth.getTime() + 3600 * 1000 * 24)
-      // this.editStudentInfoForm.birth = dBirth.getFullYear() + '-' + this.p((dBirth.getMonth() + 1)) + '-' + this.p((dBirth.getDate() + 1))
-      // console.log('dBirth', this.p(dBirth.getDate()))
-      // console.log('dBirth', this.p((dBirth.getDate() + 1)))
+      this.editStudentInfoForm.aclass.id = student.aclass.id
 
-      // dEntrance = new Date(this.editStudentInfoForm.entranceDate)
-      // dEntrance.setTime(dEntrance.getTime() + 3600 * 1000 * 24)
-      // console.log('dEntrance：' , dEntrance)
-      // console.log('dEntrance-month：' , this.p((dEntrance.getMonth() + 1)))
-      // console.log('dEntrance-day：' , this.p((dEntrance.getDay()) + 1))
-      // this.editStudentInfoForm.entranceDate = dEntrance.getFullYear() + '-' + this.p((dEntrance.getMonth() + 1)) + '-' + this.p(dEntrance.getDay())
-      // dBirth = new Date(this.editStudentInfoForm.birth)
-      // dBirth.setTime(dBirth.getTime() + 3600 * 1000 * 24)
-      // this.editStudentInfoForm.birth = dBirth.getFullYear() + '-' + this.p((dBirth.getMonth() + 1)) + '-' + this.p(dBirth.getDay())
-      // console.log('entranceDate: ' + this.editStudentInfoForm.entranceDate)
-
-      // 入学时间和出生日期的格式化
-      const dEntrance = new Date(this.editStudentInfoForm.entranceDate)
-      this.editStudentInfoForm.entranceDate = dEntrance.getFullYear() + '-' + this.p((dEntrance.getMonth() + 1)) + '-' + this.p(dEntrance.getDate())
-      const dBirth = new Date(this.editStudentInfoForm.birth)
-      this.editStudentInfoForm.birth = dBirth.getFullYear() + '-' + this.p((dBirth.getMonth() + 1)) + '-' + this.p(dBirth.getDate())
-      
+      // 日期的处理
+      this.editStudentInfoForm.entranceDate = student.entranceDate
+      this.editStudentInfoForm.birth = student.birth
+      // 家庭住址，密码，身份证号，角色，课时的处理
       this.editStudentInfoForm.region = student.region
       this.editStudentInfoForm.password = student.password
       this.editStudentInfoForm.idNumber = student.idNumber
       this.editStudentInfoForm.role.id = student.role.id
       this.editStudentInfoForm.roleId = student.roleId
       this.editStudentInfoForm.score = student.score
-      console.log('修改学生信息：', this.editStudentInfoForm)
+      // 对话框的关闭以及页面的更新
       this.editStudentInfoDialogVisible = true
       this.getStudentList()
     },
     // 更新学生姓名和密码
     async updateStudent () {
       this.editStudentNaPForm.password = this.$md5(this.editStudentNaPForm.passwordBeforeMD5)
-      console.log('编辑学生form：', this.editStudentNaPForm)
       delete this.editStudentNaPForm.passwordBeforeMD5
       await this.$http.put('/admin/updateUser', this.editStudentNaPForm)
         .then(res => {
@@ -735,20 +768,27 @@ export default {
     },
     // 入学时间过滤器进行筛选
     filterEntrDateHandler (value, row, column) {
-      // const property = column.entranceDate
       return row.entranceDate === value
+    },
+    // 性别过滤器进行筛选
+    filterGenderHandler (value, row, column) {
+      console.log('性别', row.gender)
+      var genderId = row.gender
+      var gender = ''
+      this.genderList.forEach( item => {
+        if (item.id === genderId) {
+          gender = item.gender
+        }
+      })
+      return gender === value
     },
     // 编辑(或修改)学生信息
     async updateStuInfo () {
-      // 修改密码与身份证号
-      // if (this.editStudentInfoForm.password !== null) {
-      //   this.editStudentInfoForm.password = this.$md5(this.editStudentInfoForm.passwordBeforeMD5)
-      // }
-      // if ( this.editStudentInfoForm.idNumber !== null) {
-      //   this.editStudentInfoForm.idNumber = this.$md5(this.editStudentInfoForm.idNumberBeforeMD5)
-      // }
-      // delete this.editStudentInfoForm.passwordBeforeMD5
-      // delete this.editStudentInfoForm.idNumberBeforeMD5
+      console.log('传回的入学日期', this.editStudentInfoForm.entranceDate)
+      const dEntrance = new Date(this.editStudentInfoForm.entranceDate)
+      this.editStudentInfoForm.entranceDate = dEntrance.getFullYear() + '-' + this.p((dEntrance.getMonth() + 1)) + '-' + this.p(dEntrance.getDate())
+      const dBirth = new Date(this.editStudentInfoForm.birth)
+      this.editStudentInfoForm.birth = dBirth.getFullYear() + '-' + this.p((dBirth.getMonth() + 1)) + '-' + this.p(dBirth.getDate())
       console.log('update 修改学生信息：', this.editStudentInfoForm)
       await this.$http.put('/admin/updateStudent', this.editStudentInfoForm)
           .then(res => {
@@ -761,6 +801,27 @@ export default {
           })
         this.editStudentInfoDialogVisible = false
         this.getStudentList()
+    },
+    // 模糊搜寻学生
+    async searchStudnetList () {
+      console.log('queryInfo', this.queryInfo.query)
+      this.queryInfo.pageSize = 10
+      await this.$http.get('/admin/searchStudent?pageSize=' + this.queryInfo.pageSize + '&startPage=' + this.queryInfo.currentPage + '&str=' + this.queryInfo.query)
+        .then(res => {
+          // 获取学生列表信息以及学生数量
+          this.studentList = res.data
+        }).catch(err => {
+          console.log('获取学生列表失败！' + err)
+          // return this.$message.error('获取学生列表失败！')
+        })
+      this.studentList.forEach(item => {
+        if (item.birth !== null) {
+          item.birth = item.birth.substr(0, 10)
+        }
+        if (item.entranceDate !== null) {
+          item.entranceDate = item.entranceDate.substr(0, 7)
+        }
+      })
     }
   }
 }

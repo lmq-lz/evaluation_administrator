@@ -91,15 +91,15 @@
             <!-- 内容主体区域 -->
             <el-form :model="editRightForm" :rules="editRightFormRules" ref="editRightFormRef" label-width="80px">
                 <!-- prop是验证规则rules(即editRightFormRules)的属性 -->
-                <el-form-item label="权限名" prop="name">
+                <el-form-item label="权限名">
                     <!-- v-model数据双向绑定，同步到editUserForm -->
                   <el-input v-model="editRightForm.name"></el-input>
                 </el-form-item>
-                <el-form-item label="访问路径" prop="url">
+                <el-form-item label="访问路径">
                   <!-- v-model数据双向绑定，同步到editUserForm -->
                   <el-input v-model="editRightForm.url"></el-input>
                 </el-form-item>
-                <el-form-item label="访问映射" prop="perms">
+                <el-form-item label="访问映射">
                   <!-- v-model数据双向绑定，同步到editUserForm -->
                   <el-input v-model="editRightForm.perms"></el-input>
                 </el-form-item>
@@ -160,8 +160,8 @@ export default {
         ]
       },
       // 添加新权限的表单数据
-      // 这里有一个问题，添加新权限应该是post两个数据，一个是权限名，一个是权限url(即拥有此权限可以访问哪个页面)
       editRightForm: {
+        id: 0,
         name: '',
         url: '',
         perms: ''
@@ -245,6 +245,7 @@ export default {
     // 点击编辑时打开编辑对话框事件
     showEditRightDialog (right) {
       // 将权限数据展示到编辑对话框中
+      this.editRightForm.id = right.id
       this.editRightForm.name = right.name
       this.editRightForm.url = right.url
       this.editRightForm.perms = right.perms
@@ -279,6 +280,7 @@ export default {
     },
     // 修改权限
     async updateRight () {
+      console.log('更新权限：', this.editRightForm)
       await this.$http.put('/admin/updatePerms', this.editRightForm)
         .then(res => {
           // 重新获取权限列表数据
