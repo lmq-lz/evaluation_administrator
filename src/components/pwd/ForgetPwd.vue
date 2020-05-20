@@ -12,8 +12,8 @@
 			<el-card>
 				<span class="title"> 初始化密码 </span>
 				<el-form ref="initFormRef" :model="initForm" :rules="initFormRules" label-position="right" label-width="80px">
-					<el-form-item label="学/工号" prop="username">
-						<el-input placeholder="请输入学/工号" v-model="initForm.username"></el-input>
+					<el-form-item label="用户名" prop="username">
+						<el-input placeholder="请输入用户名" v-model="initForm.username"></el-input>
 					</el-form-item>
 
 					<el-form-item label="身份证号" prop="idnumber">
@@ -71,7 +71,7 @@
 				  // 验证密码是否合法
 				  idnumber: [
 				    { required: true, message: '请输入身份证号', trigger: 'blur' },
-				    { min: 10, max: 18 , message: '请输入正确的身份证', trigger: 'blur' }
+				    { min: 3, max: 18 , message: '请输入正确的身份证', trigger: 'blur' }
 				  ],
 				  newpwd: [
 					  { required: true, message: '请输入密码', trigger: 'blur' },
@@ -84,7 +84,7 @@
 			}
 		},
 		created() {
-
+        console.log(this.$md5('510603199802201510'))
 		},
 		methods: {
 			saveButton() {

@@ -164,6 +164,7 @@ export default {
       this.activePath = activePath
     },
     changePassword () {
+      this.$router.push('/changepwd')
     }
   }
 }

@@ -18,6 +18,13 @@ Vue.prototype.$http = axios
 // 以后使用this.$md5('加密内容')
 Vue.prototype.$md5 = md5
 
+//Echarts图标组件
+import ECharts from 'vue-echarts'
+import 'echarts/lib/chart/bar'
+import 'echarts/lib/component/tooltip'
+import 'echarts/lib/chart/pie'
+Vue.component('v-chart', ECharts)
+
 new Vue({
   router,
   render: h => h(App)

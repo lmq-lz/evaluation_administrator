@@ -12,11 +12,19 @@ import Course from '../components/class+course/Course'
 import Class from '../components/class+course/Class'
 import TeachingSituation from '../components/teachingSituation/teachingSituation'
 
+//密码相关页面
+import ChangePwd from '../components/pwd/ChangePwd.vue'
+import ForgetPwd from '../components/pwd/ForgetPwd.vue'
+//查看评价详情页面
+import TeacherCourseCheck from '../components/teachingSituation/TeacherCourseCheck.vue'
+
 Vue.use(VueRouter)
 
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: Login },
+  //初始化密码 (忘记密码)页面
+  { path: '/initpwd', component: ForgetPwd },
   {
     path: '/Administrator',
     component: Administrator,
@@ -36,7 +44,10 @@ const routes = [
       { path: '/roles', component: Roles },
       { path: '/course', component: Course },
       { path: '/class', component: Class },
-      { path: '/teachingSituation', component: TeachingSituation }
+      { path: '/teachingSituation', component: TeachingSituation },
+      { path: '/teacherCourseCheck', component: TeacherCourseCheck},
+      //修改密码页面
+      { path: '/changepwd', component: ChangePwd}
     ]
     // meta:
     // {
