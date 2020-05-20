@@ -58,6 +58,17 @@
                   </template>
                 </el-table-column>
               </el-table>
+              <!-- 分页区域 -->
+              <!-- pageSize就是页面显示做多条数，可按照page-sizes进行选择1,2,5,10条/页 -->
+              <el-pagination
+              @size-change="handleSizeChange"
+              @current-change="handleCurrentChange"
+              :current-page="queryInfo.currentPage"
+              :page-sizes="[1, 2, 5, 10]"
+              :page-size="queryInfo.pageSize"
+              layout="total, sizes, prev, pager, next, jumper"
+              :total="total">
+              </el-pagination>
         </el-card>
 
         <!-- 分配权限的对话框 -->
@@ -67,12 +78,17 @@
         width="50%">
           <!-- 树形控件 -->
           <!-- <el-tree :data="data" :props="treeProps" show-checkBox></el-tree> -->
-          <template>
-            <el-checkbox :indeterminate="isIndeterminate" v-model="checkAllPerms" @change="handleCheckAllPermsChange">全选</el-checkbox>
-            <div style="margin: 15px 0;"></div>
-            <el-checkbox-group v-model="checkedPerms" @change="handleCheckedPermsChange" ref="checkBoxGroupRef">
-              <el-checkbox v-for="item in uncheckedPerms" :label="item.name" :key="item.id">{{item.name}}</el-checkbox>
-            </el-checkbox-group>
+          <template v-if="uncheckedPerms.length !== 0">
+            <!-- <el-checkbox :indeterminate="isIndeterminate" v-model="checkAll" @change="handleCheckAllPermsChange">全选</el-checkbox> -->
+            <div style="border: 1px; border-radius: 5px;">
+              <el-checkbox-group v-model="savedCheckedPerms" @change="handleCheckedPermsChange" ref="checkBoxGroupRef">
+                <el-checkbox v-for="item in uncheckedPerms" :label="item.name" :key="item.id">{{item.name}}</el-checkbox>
+              </el-checkbox-group>
+            </div>
+          </template>
+          <template v-if="uncheckedPerms.length === 0">
+            <!-- <el-checkbox :indeterminate="isIndeterminate" v-model="checkAll" @change="handleCheckAllPermsChange">全选</el-checkbox> -->
+            <div style="margin: 15px 15px; padding: 25px; padding-left: calc(50% - 100px); background-color: lavender; border: 1px; border-radius: 5px;">没有更多的权限可被分配</div>
           </template>
           <span slot="footer" class="dialog-footer">
             <el-button @click="setRightDialogVisible = false">取 消</el-button>
@@ -88,9 +104,9 @@
             <!-- 内容主体区域 -->
             <el-form :model="addRoleForm" :rules="addRoleFormRules" ref="addRoleFormRef" label-width="70px">
                 <!-- prop是验证规则rules(即addRoleFormRules)的属性 -->
-                <el-form-item label="角色名" prop="rolename">
+                <el-form-item label="角色名" prop="name">
                     <!-- v-model数据双向绑定，同步到addRoleForm -->
-                  <el-input v-model="addRoleForm.rolename"></el-input>
+                  <el-input v-model="addRoleForm.name"></el-input>
                 </el-form-item>
             </el-form>
             <!-- footer是对话框底部区域 -->
@@ -106,6 +122,16 @@
 export default {
   data () {
     return {
+      // 获取权限列表的参数对象
+      queryInfo: {
+        query: '',
+        // 当前的页数
+        currentPage: 1,
+        // 当前每页显示多少条数据
+        pageSize: 5
+      },
+      // 获取权限数据总条数
+      total: 0,
       // 所有角色列表数据
       rolesList: [
         // { id: 31, roleName: '管理员', perms: [{ id: 2, permission: '查看权限' }, { id: 3, permission: '删除权限' }, { id: 4, permission: '修改权限' }] },
@@ -123,23 +149,24 @@ export default {
         children: 'perms'
       },
       // 分配权限是是否全选所有权限
-      checkAllPerms: false,
+      checkAll: false,
       isIndeterminate: true,
       // 被选中的权限列表
       checkedPerms: [],
       // 未被选择(即可被分配)的权限
       uncheckedPerms: [],
-      // 备份备选中的权限列表
+      // 备用户选中的权限列表
       savedCheckedPerms: [],
       // 控制添加用户对话框的显示与隐藏
       addRoleDialogVisible: false,
       // 添加角色的表单数据
       addRoleForm: {
-        rolename: ''
+        name: '',
+        permissions: []
       },
       // 添加表单的验证规则对象
       addRoleFormRules: {
-        rolename: [
+        name: [
           {
             required: true, message: '请输入角色名', trigger: 'blur'
           },
@@ -147,24 +174,42 @@ export default {
             min: 1, max: 20, message: '角色名称的长度在1~20个字符之间', trigger: 'blur'
           }
         ]
+      },
+      allotSomeRolePermsForm: {
+        // 角色id
+        id: 0,
+        // 权限列表
+        permissions: {
+        }
       }
     }
   },
   created () {
+    this.getRolesTotal()
     this.getRolesList()
     this.getRightsList()
   },
   methods: {
+    // 获取所有权限数量
+    async getRolesTotal () {
+      // 为了获取total进行axios请求(假设权限数不超过20)
+      await this.$http.get('/admin/listPerms?pageSize=20&startPage=1')
+        .then(res => {
+          // 获取所有学生数量
+          // alert(res.data.length)
+          this.total = res.data.length
+          // console.log(res.data)
+        }).catch(err => {
+          console.log('获取权限列表失败！' + err)
+          // return this.$message.error('获取学生列表失败！')
+        })
+    },
     // 获取权限列表
     async getRightsList () {
       // asios获取权限列表数据
       await this.$http.get('/admin/listPerms?pageSize=20&startPage=1')
         .then(res => {
-          // this.allRightsList = res.data
-          res.data.forEach(item => {
-            this.allRightsList.push({ id: item.id, name: item.name })
-          })
-          // console.log('分配权限时获取的所有权限' + this.allRightsList)
+          this.allRightsList = res.data
           console.log('权限列表获取成功！')
           // return this.$message.success('获取所有权限列表成功！')
         }).catch(err => {
@@ -186,6 +231,18 @@ export default {
           console.log('获取角色列表失败！' + err)
           // return this.$message.error('获取角色列表失败！')
         })
+    },
+    // 监听 pageSize(页面显示最多条数，在页面中可进行1,2,5,10条/页的选择) 改变的事件
+    handleSizeChange (newSize) {
+      // console.log('页面显示最多条数：' + newSize)
+      this.queryInfo.pageSize = newSize
+      this.getRightsList()
+    },
+    // 监听 页码值 改变的事件
+    handleCurrentChange (newPage) {
+      // console.log('最新页码值： ' + newPage)
+      this.queryInfo.currentPage = newPage
+      this.getRightsList()
     },
     // 根据id删除对应的权限(角色id,权限id)
     async removeRightById (role, rightsId) {
@@ -213,31 +270,64 @@ export default {
     },
     // 展示分配权限的对话框
     async showSetRightDialog (role) {
-      // 获取所有权限的数据
-      // const { data: res } = await this.$http.get('getAllRights')
-      // if (res.meta.status !== 200) {
-      //   return this.$message.error('获取所有权限列表失败！')
-      // }
-      // 把获取到的所有权限保存到 data 中
-      // this.rightsList = res.data
-
+      // 分配权限表单获取被编辑角色的id
+      this.allotSomeRolePermsForm.id = role.id
       // 想法一：将所有权限展示出来，已有权限默认打钩
       // this.checkedPerms = []
       // this.savedCheckedPerms = []
-      this.checkedPerms = []
-      role.permissions.forEach(item => {
-        this.checkedPerms.push(item.name)
-        // console.log('被选择权限：' + item.name)
+      this.checkedPerms = role.permissions
+      // 声明变量保存获取的角色列表
+      var allPermsList = this.allRightsList
+      var isChecked = false
+      this.savedCheckedPerms = []
+      allPermsList.forEach( (allPermsItem, index) => {
+        isChecked = false
+        this.checkedPerms.forEach( checkedPermsItem => {
+          if (allPermsItem.name === checkedPermsItem.name) {
+            // delete allPermsList[index]
+            isChecked = true
+            // console.log('已选权限：', checkedPermsItem.name)
+          }
+        })
+        if (!isChecked) {
+          this.uncheckedPerms.push(allPermsItem)
+        }
+        if ( this.uncheckedPerms === null) {
+          
+        }
       })
+      // console.log('未选列表：', this.uncheckedPerms)
+      // role.permissions.forEach(item => {
+      //   this.checkedPerms.push(item.name)
+      //   // console.log('被选择权限：' + item.name)
+      // })
       // 想法二：只展示未被选择的权限
-      this.allPermsDelCheckedPerms()
+      // this.allPermsDelCheckedPerms()
       // 备份已选权限(目的：全选与全不选时候用)
-      this.savedCheckedPerms = this.checkedPerms
+      // this.savedCheckedPerms = this.checkedPerms
+      // 声明变量保存获取的角色列表
+      var allPermsList = this.allRightsList
+      this.uncheckedPerms = []
+      var isChecked = false
+      allPermsList.forEach( (allPermsItem, index) => {
+        isChecked = false
+        // console.log('所有权限item，',allPermsItem.name)
+        this.checkedPerms.forEach( checkedPermsItem => {
+          if (allPermsItem.name === checkedPermsItem.name) {
+            // delete allPermsList[index]
+            isChecked = true
+            // console.log('已选权限：', checkedPermsItem.name)
+          }
+        })
+        if (!isChecked) {
+          // console.log('push:', allPermsItem.name)
+          this.uncheckedPerms.push(allPermsItem)
+        }
+      })
       this.setRightDialogVisible = true
       // this.$refs.checkBoxGroupRef.forEach(item => {
       //   item.disabled = 'disabled'
       // })
-      return this.checkedPerms
     },
     // 权限选中状态被改变调用的事件 --  checkbox选中 当绑定值变化时触发的事件
     handleCheckedPermsChange (value) {
@@ -254,12 +344,26 @@ export default {
       this.$refs.addRoleFormRef.validate(async valid => {
         if (!valid) return
         // 可以发起添加用户的网络请求
-        const { data: res } = await this.$http.post('role', this.addRoleForm)
-        if (res.meta.status !== 201) {
-          const errMsg = this.$message.error('添加角色失败')
-          return errMsg
-        }
-        this.$message.success('添加角色成功')
+        // const { data: res } = await this.$http.post('/admin/addRole', this.addRoleForm)
+        // if (res.status !== 201) {
+        //   const errMsg = this.$message.error('添加角色失败')
+        //   // return errMsg
+        // } else if ( res.status === 200) {
+        //   console.log('添加角色成功')
+        //   this.$message.success('添加角色成功')
+        // }
+        await this.$http.post('/admin/addRole', this.addRoleForm)
+          .then(res => {
+            if (res.data.code === 400) {
+              return this.$message.error('添加角色失败')
+            }
+            if (res.status === 200 && res.data.code !== 400) {
+              return this.$message.success('添加角色成功！')
+            }
+          }).catch(err => {
+            console.log('添加学生失败！' + err)
+            // return this.$message.error('获取所有角色列表失败！')
+          })
         // 隐藏添加用户的对话框
         this.addRoleDialogVisible = false
         // 重新获取用户列表数据
@@ -275,16 +379,34 @@ export default {
       //   this.checkedPerms.push(item.name)
       // })
       // this.checkedPerms = value ? this.allRightsList : this.checkedPerms
-      if (value) {
-        this.allRightsList.forEach(item => this.checkedPerms.push(item.name))
-      } else {
-        this.checkedPerms = this.savedCheckedPerms
-      }
-      this.isIndeterminate = !this.isIndeterminate
+      // if (value) {
+      //   this.allRightsList.forEach(item => this.checkedPerms.push(item.name))
+      // } else {
+      //   this.checkedPerms = this.savedCheckedPerms
+      // }
+      // this.isIndeterminate = !this.isIndeterminate
+      // delete this.allRightsList
     },
     // 分配权限事件
     allotRights () {
       // const keys = []
+      console.log('被选中的权限：', this.savedCheckedPerms)
+      // 向分配权限表单中添加权限列表
+      this.allRightsList.forEach( allRightItem => {
+        this.savedCheckedPerms.forEach( checkedPermItem => {
+          if (allRightItem.name === checkedPermsItem.name) {
+            this.allotSomeRolePermsForm.push(checkedPermsItem)
+          }
+        })
+      })
+      // ??????????????????????????????????????这里是axios请求分配某角色某权限
+      // await this.$http.post('/admin/allotPerms', this.allotSomeRolePermsForm)
+      //   .then(res => {
+      //     console.log('权限添加成功！')
+      //   }).catch(err => {
+      //     console.log('权限添加失败！' + err)
+      //     // return this.$message.error('权限添加失败！')
+      //   })
       // 分配权限对话框关闭
       this.setRightDialogVisible = false
     },
@@ -301,15 +423,15 @@ export default {
         })
       this.getRolesList()
     },
-    // 根据id删除权限
+    // 根据id删除某角色某权限(权限id，角色id)
     async deletePerms (pid, roleId) {
-      await this.$http.get('/admin/deletePerms?id=' + pid + '&roleId=' + roleId)
-        .then(res => {
-          console.log('权限删除成功！')
-        }).catch(err => {
-          console.log('权限删除失败！' + err)
-          // return this.$message.error('获取角色列表失败！')
-        })
+      // await this.$http.get('/admin/deletePerms?id=' + pid + '&roleId=' + roleId)
+      //   .then(res => {
+      //     console.log('权限删除成功！')
+      //   }).catch(err => {
+      //     console.log('权限删除失败！' + err)
+      //     // return this.$message.error('获取角色列表失败！')
+      //   })
       // this.getRolesList()
     },
     // 分配权限时判断是否所有权限里面含有已分配权限
