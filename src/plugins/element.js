@@ -31,6 +31,10 @@ import {
   CheckboxGroup,
   Select,
   Option,
+  Loading,
+  Tabs,
+  TabPane,
+  Footer
   DatePicker
 } from 'element-ui'
 
@@ -63,8 +67,13 @@ Vue.use(Checkbox)
 Vue.use(CheckboxGroup)
 Vue.use(Select)
 Vue.use(Option)
+Vue.use(Loading)
+Vue.use(Tabs)
+Vue.use(TabPane)
+Vue.use(Footer)
 Vue.use(DatePicker)
 
 Vue.prototype.$message = Message
 // 把MessageBox.confirm函数挂载到Vue的原型对象上，名字为confirm，在组件中通过this.$confirm就可弹出确认消息的提示框
 Vue.prototype.$confirm = MessageBox.confirm
+Vue.prototype.$alert = MessageBox.alert

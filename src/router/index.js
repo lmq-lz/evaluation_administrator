@@ -12,11 +12,19 @@ import Course from '../components/class+course/Course'
 import Class from '../components/class+course/Class'
 import TeachingSituation from '../components/teachingSituation/teachingSituation'
 
+//密码相关页面
+import ChangePwd from '../components/pwd/ChangePwd.vue'
+import ForgetPwd from '../components/pwd/ForgetPwd.vue'
+//查看评价详情页面
+import TeacherCourseCheck from '../components/teachingSituation/TeacherCourseCheck.vue'
+
 Vue.use(VueRouter)
 
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', component: Login },
+  //初始化密码 (忘记密码)页面
+  { path: '/initpwd', component: ForgetPwd },
   {
     path: '/Administrator',
     component: Administrator,
@@ -36,7 +44,10 @@ const routes = [
       { path: '/roles', component: Roles },
       { path: '/course', component: Course },
       { path: '/class', component: Class },
-      { path: '/teachingSituation', component: TeachingSituation }
+      { path: '/teachingSituation', component: TeachingSituation },
+      { path: '/teacherCourseCheck', component: TeacherCourseCheck},
+      //修改密码页面
+      { path: '/changepwd', component: ChangePwd}
     ]
     // meta:
     // {
@@ -45,21 +56,27 @@ const routes = [
   }
 ]
 
-// 禁止在没有登录的情况下直接输入地址进行访问
-// routes.beforeEach((to, from, next) => {
-//   可以在路由元信息指定哪些页面需要登录权限
-//   const islogin = false // 假设没有登录（这里应从接口获取）
-//   if (to.meta.requiresAuth && !islogin) { // 需要登录授权，这里还需要判断是否登录
-//     next('/login') // 跳转到登录
-//     return
-//   }
-//   next()
-// })
-
 const router = new VueRouter({
   routes
 })
 
+// 挂载路由导航守卫
+router.beforeEach((to, from, next) => {
+	// to 将要访问的路径
+	// from 从哪个路径跳转而来
+	// next 是一个函数，表示放行 next()放行、next('/login') 强制跳转
+	if (to.path === '/login' || to.path === '/initpwd' || to.path === '/roleerr') return next() // 登录页直接放行
+	// 获取token
+	const tokenStr = window.sessionStorage.getItem('token')
+	if (!tokenStr) return next('/login')
+
+	//不同角色访问守卫
+	const role_id = window.sessionStorage.getItem('role_id')
+	if(role_id !== '1'){
+    return next('/login')
+  }
+	next()
+})
 // routes.addRoutes(router)
 
 export default router

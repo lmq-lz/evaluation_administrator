@@ -9,14 +9,21 @@ import axios from 'axios'
 // 导入MD5加密
 import md5 from 'js-md5'
 
-// axios.defaults.baseURL = process.env.NODE_ENV === 'production' ? 'http://localhost:8080' : '/api'
-axios.defaults.baseURL = '/api'
+axios.defaults.baseURL = process.env.NODE_ENV === 'production'? 'http://localhost:8081':'/api'
+// axios.defaults.baseURL = '/api'
 // 通过axios请求拦截器添加token，保证拥有获取数据的权限
 
 // 以后使用this.$http.get/post.then(res => {}).catch(err => {})
 Vue.prototype.$http = axios
 // 以后使用this.$md5('加密内容')
 Vue.prototype.$md5 = md5
+
+//Echarts图标组件
+import ECharts from 'vue-echarts'
+import 'echarts/lib/chart/bar'
+import 'echarts/lib/component/tooltip'
+import 'echarts/lib/chart/pie'
+Vue.component('v-chart', ECharts)
 
 new Vue({
   router,
