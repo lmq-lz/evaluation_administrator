@@ -59,6 +59,18 @@
                 </template>
               </el-table-column>
             </el-table>
+
+            <!-- 分页区域 -->
+            <!-- pageSize就是页面显示做多条数，可按照page-sizes进行选择1,2,5,10条/页 -->
+            <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="queryInfo.currentPage"
+            :page-sizes="[1, 2, 5, 10]"
+            :page-size="queryInfo.pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="total">
+            </el-pagination>
       </el-card>
 
       <!-- 添加班级的对话框 -->
@@ -70,9 +82,9 @@
           <!-- 内容主体区域 -->
           <el-form :model="addClassForm" :rules="addClassFormRules" ref="addClassFormRef" label-width="70px">
               <!-- prop是验证规则rules(即addClassFormRules)的属性 -->
+              <!-- v-model数据双向绑定，同步到addClassForm -->
               <el-form-item label="班级id" prop="id">
-                  <!-- v-model数据双向绑定，同步到addClassForm -->
-                <el-input v-model.number="addClassForm.id"></el-input>
+                <el-input v-model="addClassForm.id"></el-input>
               </el-form-item>
               <el-form-item label="班级代码" prop="number">
                   <el-input v-model="addClassForm.number"></el-input>
@@ -82,6 +94,30 @@
               </el-form-item>
               <el-form-item label="年级" prop="grade">
                 <el-input v-model="addClassForm.grade"></el-input>
+              </el-form-item>
+              <!-- <el-form-item label="id" prop="id">
+                <el-input v-model="addClassForm.id"></el-input>
+              </el-form-item>
+              <el-form-item label="班级名称" prop="id">
+                <el-input v-model="addClassForm.name"></el-input>
+              </el-form-item>
+              <el-form-item label="班级代码" prop="id">
+                <el-input v-model="addClassForm.number"></el-input>
+              </el-form-item>
+              <el-form-item label="年级" prop="id">
+                <el-input v-model="addClassForm.grade"></el-input>
+              </el-form-item> -->
+              <el-form-item label="系名称">
+                <template>
+                  <el-select v-model="addClassForm.departmentId">
+                    <el-option
+                      v-for="item in departmentList"
+                      :key="item.id"
+                      :label="item.name"
+                      :value="item.id">
+                    </el-option>
+                  </el-select>
+                </template>
               </el-form-item>
           </el-form>
           <!-- footer是对话框底部区域 -->
@@ -195,6 +231,16 @@ export default {
       }
     }
     return {
+      // 获取班级列表的参数对象
+      queryInfo: {
+        query: '',
+        // 当前的页数
+        currentPage: 1,
+        // 当前每页显示多少条数据
+        pageSize: 2
+      },
+      // 获取班级数据总条数
+      total: 0,
       // 所有班级的列表
       classList: [],
       // 所有的系列表
@@ -246,7 +292,7 @@ export default {
         ],
         name: [
           {
-            required: true, message: '请输入班级名称(例如：1班)', trigger: 'blur'
+            required: true, message: '请输入班级名称(例如：汉语言学)', trigger: 'blur'
           },
           {
             validator: checkStringLenMax128, trigger: 'blur'
@@ -262,39 +308,101 @@ export default {
         ]
       },
       // 编辑班级的验证规则对象
-      editClassFormRules: this.addClassFormRules
+      editClassFormRules: {
+        id: [
+          {
+            required: true, message: '请输入班级id', trigger: 'blur'
+          },
+          {
+            validator: checkClassIdIsRepeated, trigger: 'blur'
+          }
+        ],
+        number: [
+          {
+            required: true, message: '请输入班级代码(例如：171104)', trigger: 'blur'
+          },
+          {
+            validator: checkStringLenMax128, trigger: 'blur'
+          },
+          {
+            validator: checkCosNumberIsNumOrDigit, trigger: 'blur'
+          }
+        ],
+        name: [
+          {
+            required: true, message: '请输入班级名称(例如：汉语言学)', trigger: 'blur'
+          },
+          {
+            validator: checkStringLenMax128, trigger: 'blur'
+          }
+        ],
+        grade: [
+          {
+            required: true, message: '请输入年级(例如：2017)', trigger: 'blur'
+          },
+          {
+            validator: checkGrade, trigger: 'blur'
+          }
+        ]
+      }
     }
   },
   created () {
     // alert('用户名：' + sessionStorage.getItem('username'))
+    this.getClassTotal()
+    this.getDepartmentList()
     this.getClassList()
   },
   methods: {
-    // 获取所有班级列表
+    // 获取所有班级数量
+    async getClassTotal () {
+      // 为了获取total进行axios请求(假设班级人数不超过1000)
+      await this.$http.get('/classe/listClass?pageSize=1000&startPage=' + this.queryInfo.currentPage)
+        .then(res => {
+          // 获取所有班级数量
+          this.total = res.data.length
+        }).catch(err => {
+          console.log('获取班级列表失败！' + err)
+          // return this.$message.error('获取学生列表失败！')
+        })
+    },
+    // 获取所有班级列表(请求参数包括分页数据)
     async getClassList () {
-      await this.$http.get('/classe/listClass')
+      await this.$http.get('/classe/listClass?pageSize=' + this.queryInfo.pageSize + '&startPage=' + this.queryInfo.currentPage)
         .then(res => {
           this.classList = res.data
-          // this.classList.forEach(classItem => {
-          //   this.departmentList.forEach(depItem => {
-          //     if (classItem.departmentId === depItem.id) {
-          //       // classItem.push({ department: depItem.name })
-          //     }
-          //   })
-          // })
-          // alert('金融学数据：' + this.classList[0].id)
+          this.classList.forEach(classItem => {
+            this.departmentList.forEach(depItem => {
+              if (classItem.departmentId === depItem.id) {
+                classItem.departmentName = depItem.name
+              }
+            })
+          })
+          // console.log('class info：', this.classList)
         }).catch(err => {
           console.log('获取班级列表失败！' + err)
         })
     },
     // 获取所有系列表
     async getDepartmentList () {
-      await this.$http.get('/department/listDepartment')
+      await this.$http.get('/department/listDepartment?pageSize=20&startPage=1')
         .then(res => {
           this.departmentList = res.data
         }).catch(err => {
           console.log('获取系列表失败！' + err)
         })
+    },
+    // 监听 pageSize(页面显示最多条数，在页面中可进行1,2,5,10条/页的选择) 改变的事件
+    handleSizeChange (newSize) {
+      // console.log('页面显示最多条数：' + newSize)
+      this.queryInfo.pageSize = newSize
+      this.getClassList()
+    },
+    // 监听 页码值 改变的事件
+    handleCurrentChange (newPage) {
+      // console.log('最新页码值： ' + newPage)
+      this.queryInfo.currentPage = newPage
+      this.getClassList()
     },
     // 通过班级id删除班级
     async deleteClass (id) {
@@ -311,10 +419,12 @@ export default {
         return this.$message.info('已取消删除！123')
       }
       // 问题！！！！！！！！！答辩前需更改正确路径
-      await this.$http.get('/classManage/deleteClass?id=' + id)
+      await this.$http.delete('/classe/deleteClass/{id}?id=' + id)
         .then(res => {
           if (res.status !== 200) {
             return this.$message.error('删除班级失败！')
+            // 刷新页面
+            this.getClassList()
           } else {
             console.log(res.message + '删除班级成功！')
           }
@@ -346,9 +456,18 @@ export default {
     addClass () {
       this.$refs.addClassFormRef.validate(async valid => {
         if (!valid) return
-        await this.$http.post('/classManage/addClass', this.addClassForm)
+        console.log('添加班级的信息：', this.addClassForm)
+        await this.$http.post('/classe/addClass', this.addClassForm)
           .then(res => {
-            return this.$message.success('添加班级成功！')
+            // code为400表示参数出错，违反数据完整性
+            if (res.data.code === '400') {
+              console.log(res.data.msg + ',' + res.data.info)
+            } else {
+              // 请求返回状态码是200，表示成功
+              if (res.status === '200') {
+                return this.$message.success('添加班级成功！')
+              }
+            }
           }).catch(err => {
             console.log('添加班级失败！' + err)
           })

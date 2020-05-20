@@ -14,5 +14,4 @@ module.exports = {
 		}
 	},
 
-    lintOnSave: false
 }

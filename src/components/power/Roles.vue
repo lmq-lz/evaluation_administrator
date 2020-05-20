@@ -152,57 +152,40 @@ export default {
   },
   created () {
     this.getRolesList()
+    this.getRightsList()
   },
   methods: {
     // 获取权限列表
     async getRightsList () {
-      // const { data: res } = await this.$http.get('rights')
-      //   .then(res => {
-      //     // this.rightsList = res.data.data
-      //   }).catch(err => {
-      //     console.log('获取权限列表失败！' + err)
-      //     return this.$message.error('获取权限列表失败！')
-      //   })
-      // if (res.meta.status !== 200) {
-      //   return this.$message.error('获取权限列表失败！')
-      // }
-      // 利用请求的返回数据赋值
-      // this.rightsList = res.data
-
-      await this.$http.get('/admin/listPerms')
+      // asios获取权限列表数据
+      await this.$http.get('/admin/listPerms?pageSize=20&startPage=1')
         .then(res => {
           // this.allRightsList = res.data
           res.data.forEach(item => {
             this.allRightsList.push({ id: item.id, name: item.name })
           })
           // console.log('分配权限时获取的所有权限' + this.allRightsList)
-          return this.$message.success('获取所有权限列表成功！')
+          console.log('权限列表获取成功！')
+          // return this.$message.success('获取所有权限列表成功！')
         }).catch(err => {
           console.log('获取所有权限列表失败！' + err)
-          return this.$message.error('获取所有权限列表失败！')
+          // return this.$message.error('获取所有权限列表失败！')
         })
     },
     // 获取所有角色列表
     async getRolesList () {
-      // const { data: res } = await this.$http.get('/admin/listRole')
-      // if (res.meta.status !== 200) {
-      //   this.$message.error('获取角色列表数据失败！')
-      //   // console.log('获取角色列表数据失败！')
-      // }
-      // this.rolesList = res.data
-      // console.log('获取角色列表数据成功！')
-
-      await this.$http.get('/admin/listRole')
+      // axios获取角色列表数据
+      await this.$http.get('/admin/listRole?pageSize=20&startPage=1')
         .then(res => {
           // 获取学生列表信息以及学生数量
           this.rolesList = res.data
           // console.log('角色列表数据：' + res.data)
-          return this.$message.success('获取角色列表成功！')
+          console.log('获取角色列表成功')
+          // return this.$message.success('获取角色列表成功！')
         }).catch(err => {
           console.log('获取角色列表失败！' + err)
-          return this.$message.error('获取角色列表失败！')
+          // return this.$message.error('获取角色列表失败！')
         })
-      this.getRightsList()
     },
     // 根据id删除对应的权限(角色id,权限id)
     async removeRightById (role, rightsId) {
@@ -219,9 +202,10 @@ export default {
 
       // console.log('成功删除权限')
 
-      const { data: res } = await this.$http.post('admin/deleteRole?roleId=' + role.id + 'rightsId=' + rightsId)
-      if (res.meta.status !== 200) {
-        return this.$message.error('删除权限失败！')
+      const { data: res } = await this.$http.delete('admin/deleteRole?roleId=' + role.id + 'rightsId=' + rightsId)
+      if (res.status !== 200) {
+        console.log('删除权限失败！')
+        // return this.$message.error('删除权限失败！')
       }
       // 页面中的权限会全部重新渲染(当前权限详细信息下拉条会关闭)
       this.getRolesList()
@@ -306,19 +290,20 @@ export default {
     },
     // 删除角色
     deleteRole (rid) {
-      this.$http.get('/admin/deleteRole?id=' + rid)
+      this.$http.delete('/admin/deleteRole?id=' + rid)
         .then(res => {
           // 删除角色成功
-          // console.log('角色删除成功！')
+          console.log('角色删除成功！')
+          return this.$message.success('删除角色成功！')
         }).catch(err => {
           console.log('角色删除失败！' + err)
           // return this.$message.error('角色删除失败！')
         })
-      // this.getRolesList()
+      this.getRolesList()
     },
     // 根据id删除权限
     async deletePerms (pid, roleId) {
-      await this.$http.get('/admin/deletePerms?id=' + pid + ',roleId=' + roleId)
+      await this.$http.get('/admin/deletePerms?id=' + pid + '&roleId=' + roleId)
         .then(res => {
           console.log('权限删除成功！')
         }).catch(err => {

@@ -47,12 +47,25 @@
               <el-table-column label="课程id" prop="id"></el-table-column>
               <el-table-column label="课程名称" prop="name"></el-table-column>
               <el-table-column label="课程代码" prop="number"></el-table-column>
-              <el-table-column label="课程类型" prop="courseType"></el-table-column>
-              <el-table-column label="课程种类" prop="courseClass"></el-table-column>
+              <el-table-column label="课程类型" prop="courseType">
+              </el-table-column>
+              <el-table-column label="课程种类" prop="courseClass">
+                <template slot-scope="scope">
+                  <el-tag
+                    :type="scope.row.courseClass === '专业必修课'||scope.row.courseClass === '必修课' ? 'primary' : (scope.row.courseClass === '选修课' ? 'warning':'success')"
+                    disable-transitions>
+                    {{scope.row.courseClass}}
+                  </el-tag>
+                </template>
+              </el-table-column>
               <el-table-column label="开课学院" prop="courseDep"></el-table-column>
               <el-table-column label="学分" prop="score"></el-table-column>
               <el-table-column label="学时" prop="time"></el-table-column>
-              <el-table-column label="授课教师" prop="teacher"></el-table-column>
+              <el-table-column label="授课教师" prop="teacher.name">
+                <template slot-scope="scope">
+                  <el-tag type='danger' disable-transitions>{{scope.row.teacher.name}}</el-tag>
+                </template>
+              </el-table-column>
               <!-- <el-table-column label="权限名称" prop="permission"></el-table-column> -->
               <el-table-column label="操作" width="350px">
                 <template slot-scope="scope">
@@ -63,6 +76,17 @@
                 </template>
               </el-table-column>
             </el-table>
+            <!-- 分页区域 -->
+            <!-- pageSize就是页面显示做多条数，可按照page-sizes进行选择1,2,5,10条/页 -->
+            <el-pagination
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+            :current-page="queryInfo.currentPage"
+            :page-sizes="[1, 5, 10, 20]"
+            :page-size="queryInfo.pageSize"
+            layout="total, sizes, prev, pager, next, jumper"
+            :total="total">
+            </el-pagination>
       </el-card>
 
       <!-- 添加课程的对话框 -->
@@ -206,6 +230,16 @@ export default {
       }
     }
     return {
+      // 获取课程列表的参数对象
+      queryInfo: {
+        query: '',
+        // 当前的页数
+        currentPage: 1,
+        // 当前每页显示多少条数据
+        pageSize: 5
+      },
+      // 获取课程数据总条数
+      total: 0,
       // 所有课程的列表
       courseList: [],
       // 控制添加课程对话框的显示与隐藏
@@ -297,17 +331,43 @@ export default {
   },
   created () {
     // sessionStorage.setItem('username', 'abc')
+    this.getCourseTotal()
     this.getCourseList()
   },
   methods: {
+    // 获取所有学生数量
+    async getCourseTotal () {
+      // 为了获取total进行axios请求(假设课程数量不超过1000)
+      await this.$http.get('/courseManage/listCourse?pageSize=1000&startPage=' + this.queryInfo.currentPage)
+        .then(res => {
+          // 获取所有课程数量
+          this.total = res.data.length
+          // console.log(res.data)
+        }).catch(err => {
+          console.log('获取课程列表失败！' + err)
+          // return this.$message.error('获取学生列表失败！')
+        })
+    },
     // 获取所有课程列表
     async getCourseList () {
-      await this.$http.get('/courseManage/listCourse')
+      await this.$http.get('/courseManage/listCourse?pageSize=' + this.queryInfo.pageSize + '&startPage=' + this.queryInfo.currentPage)
         .then(res => {
           this.courseList = res.data
         }).catch(err => {
           console.log('获取课程列表失败！' + err)
         })
+    },
+    // 监听 pageSize(页面显示最多条数，在页面中可进行1,2,5,10条/页的选择) 改变的事件
+    handleSizeChange (newSize) {
+      // console.log('页面显示最多条数：' + newSize)
+      this.queryInfo.pageSize = newSize
+      this.getCourseList()
+    },
+    // 监听 页码值 改变的事件
+    handleCurrentChange (newPage) {
+      // console.log('最新页码值： ' + newPage)
+      this.queryInfo.currentPage = newPage
+      this.getCourseList()
     },
     // 通过课程id删除课程
     async deleteCourse (id) {

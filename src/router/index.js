@@ -77,7 +77,6 @@ router.beforeEach((to, from, next) => {
   }
 	next()
 })
-
 // routes.addRoutes(router)
 
 export default router
