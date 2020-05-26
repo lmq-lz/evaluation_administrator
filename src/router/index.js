@@ -4,12 +4,15 @@ import Login from '../components/Login'
 import Administrator from '../components/Administrator'
 import Welcome from '../components/Welcome'
 import Student from '../components/user/Student'
+import StudentInfo from '../components/info/StudentInfo'
 import Teachers from '../components/user/Teachers'
 import Supervisor from '../components/user/Supervisor'
 import Rights from '../components/power/Rights'
 import Roles from '../components/power/Roles'
 import Course from '../components/class+course/Course'
 import Class from '../components/class+course/Class'
+import ClassCourseInfo from '../components/info/ClassCourseInfo'
+import CourseTeacherInfo from '../components/info/CourseTeacherInfo'
 import TeachingSituation from '../components/teachingSituation/teachingSituation'
 
 //密码相关页面
@@ -22,7 +25,7 @@ Vue.use(VueRouter)
 
 const routes = [
   { path: '/', redirect: '/login' },
-  { path: '/login', component: Login },
+  { path: '/login', name: 'login', component: Login },
   //初始化密码 (忘记密码)页面
   { path: '/initpwd', component: ForgetPwd },
   {
@@ -33,11 +36,13 @@ const routes = [
       {
         path: '/welcome',
         component: Welcome
-        // children: [
-        //  { path: '/login', component: Login }
-        // ]
       },
-      { path: '/student', component: Student },
+      { path: '/student',
+        component: Student
+      },
+      { path: '/studentInfo', name: 'studentInfo', component: StudentInfo },
+      { path: '/classCourseInfo', name: 'classCourseInfo', component: ClassCourseInfo },
+      { path: '/courseTeacherInfo', name: 'courseTeacherInfo', component: CourseTeacherInfo },
       { path: '/teachers', component: Teachers },
       { path: '/supervisor', component: Supervisor },
       { path: '/rights', component: Rights },

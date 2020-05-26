@@ -41,11 +41,18 @@
               <el-table-column label="操作" width="350px">
                 <template slot-scope="scope">
                   <el-button type="primary" icon="el-icon-edit" size='mini' @click="showEditClassDialog(scope.row)">编辑班级</el-button>
-                  <el-button type="primary" icon="el-icon-edit" size='mini'>查看选课</el-button>
+                  <!-- 查看选课详情(若学生暂无选课信息则不能跳转) -->
+                  <el-button type="primary" icon="el-icon-edit" size='mini' @click="linkClassCourseInfo(scope.row)">查看选课</el-button>
                   <!-- <el-button type="danger" icon="el-icon-delete" size='mini'>查看选课学生</el-button> -->
                   <el-button type="danger" icon="el-icon-delete" size='mini' @click="deleteClass(scope.row.id)">删除班级</el-button>
                 </template>
               </el-table-column>
+              <!-- 查看选课详情(若学生暂无选课信息则不能跳转) -->
+              <!-- <el-table-column label="选课详情">
+                <template slot-scope="scope">
+                  <el-button type="primary" :disableed="!scope.row.courseList" size="mini" @click="linkClassCourseInfo(scope.row)">查看选课</el-button>
+                </template>
+              </el-table-column> -->
             </el-table>
 
             <!-- 分页区域 -->
@@ -71,10 +78,10 @@
           <el-form :model="addClassForm" :rules="addClassFormRules" ref="addClassFormRef" label-width="70px">
               <!-- prop是验证规则rules(即addClassFormRules)的属性 -->
               <!-- v-model数据双向绑定，同步到addClassForm -->
-              <el-form-item label="班级id" prop="id">
+              <!-- <el-form-item label="班级id" prop="id">
                 <el-input v-model="addClassForm.id"></el-input>
-              </el-form-item>
-              <el-form-item label="班级代码" prop="number">
+              </el-form-item> -->
+              <el-form-item label="班级数称" prop="number">
                   <el-input v-model="addClassForm.number"></el-input>
               </el-form-item>
               <el-form-item label="班级名称" prop="name">
@@ -83,21 +90,9 @@
               <el-form-item label="年级" prop="grade">
                 <el-input v-model="addClassForm.grade"></el-input>
               </el-form-item>
-              <!-- <el-form-item label="id" prop="id">
-                <el-input v-model="addClassForm.id"></el-input>
-              </el-form-item>
-              <el-form-item label="班级名称" prop="id">
-                <el-input v-model="addClassForm.name"></el-input>
-              </el-form-item>
-              <el-form-item label="班级代码" prop="id">
-                <el-input v-model="addClassForm.number"></el-input>
-              </el-form-item>
-              <el-form-item label="年级" prop="id">
-                <el-input v-model="addClassForm.grade"></el-input>
-              </el-form-item> -->
               <el-form-item label="系名称">
                 <template>
-                  <el-select v-model="addClassForm.departmentId">
+                  <el-select v-model="addClassForm.department.id">
                     <el-option
                       v-for="item in departmentList"
                       :key="item.id"
@@ -138,7 +133,7 @@
               </el-form-item>
               <el-form-item label="系名称">
                 <template>
-                  <el-select v-model="chosenDepId">
+                  <el-select v-model="editClassForm.department.id">
                     <el-option
                       v-for="item in departmentList"
                       :key="item.id"
@@ -242,12 +237,17 @@ export default {
         id: 0,
         number: '',
         name: '',
-        departmentId: '',
+        department: {
+          id: 1
+        },
         grade: ''
       },
       // 编辑班级的表单数据
       editClassForm: {
-        departmentId: 0,
+        department: {
+          id: 0,
+          name: ''
+        },
         grade: '',
         id: 0,
         name: '',
@@ -257,17 +257,18 @@ export default {
       chosenDepId: 0,
       // 添加班级表单的验证规则
       addClassFormRules: {
-        id: [
-          {
-            required: true, message: '请输入班级id', trigger: 'blur'
-          },
-          {
-            validator: checkClassIdIsRepeated, trigger: 'blur'
-          }
-        ],
+        // id: [
+        //   {
+        //     required: true, message: '请输入班级id', trigger: 'blur'
+        //   },
+        //   {
+        //     validator: checkClassIdIsRepeated, trigger: 'blur'
+        //   }
+        // ],
         number: [
           {
-            required: true, message: '请输入班级代码(例如：171104)', trigger: 'blur'
+            // required: true, message: '请输入班级代码(例如：171104)', trigger: 'blur'
+            required: true, message: '请输入几班(如：1)', trigger: 'blur'
           },
           {
             validator: checkStringLenMax128, trigger: 'blur'
@@ -414,6 +415,8 @@ export default {
             console.log(res.message + '删除班级成功！')
           }
         })
+      // 重新获取班级数据
+      this.getClassTotal()
       this.getClassList()
     },
     // 监听添加班级对话框的关闭事件
@@ -427,16 +430,9 @@ export default {
     // 点击编辑时打开班级编辑对话框
     showEditClassDialog (aClass) {
       this.editClassForm = aClass
-      // this.editClassForm.id = aClass.id
-      // this.editClassForm.departmentId = aClass.departmentId
-      // this.editClassForm.grade = aClass.grade
-      // this.editClassForm.name = aClass.name
-      // this.editClassForm.number = aClass.number
-      // console.log('操作班级为：' + this.editClassForm.departmentName)
       this.chosenDepId = aClass.departmentId
       this.getDepartmentList()
       this.editClassDialogVisible = true
-      // this
     },
     // 点击按钮添加班级
     addClass () {
@@ -461,6 +457,7 @@ export default {
       // 隐藏添加班级对话框
       this.addClassDialogVisible = false
       // 重新获取班级列表
+      this.getClassTotal()
       this.getClassList()
     },
     // 修改班级
@@ -487,6 +484,17 @@ export default {
     // 选中值发生变化时触发
     change () {
       alert('选中值变化时触发')
+    },
+    // 跳转到班级选课信息页进行修改
+    linkClassCourseInfo (aclass) {
+      // console.log('student courseList：', student.courseList)
+      const courseInfo = JSON.stringify(aclass.courseList)
+      // console.log('stringfy stuCourseList:', studentInfo)
+      window.sessionStorage.setItem('classCourseInfo', courseInfo)
+      // 全局组件传递参数
+      eventBus.$emit('classId', aclass.id)
+      // 路由跳转选课详情界面
+      this.$router.push('classCourseInfo')
     }
   }
 }

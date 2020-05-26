@@ -54,6 +54,7 @@
                       <!-- el-tooltip：进行消息的提示-->
                       <el-tooltip class="item" effect="dark" content="编辑" placement="top" :enterable="false">
                           <el-button type="primary" icon="el-icon-edit" size="mini" @click="showeditStudentInfoDialog(scope.row)"></el-button>
+                          <!-- <el-button type="primary" icon="el-icon-edit" size="mini" @click="linkStudentInfo(scope.row)"></el-button> -->
                       </el-tooltip>
                       <!-- 删除按钮 -->
                       <el-tooltip class="item" effect="dark" content="删除" placement="top">
@@ -64,6 +65,12 @@
                           <el-button type="warning" icon="el-icon-setting" size="mini" @click="showeditStudentNaPDialog(scope.row)"></el-button>
                       </el-tooltip>
                   </template>
+              </el-table-column>
+              <!-- 查看选课详情(若学生暂无选课信息则不能跳转) -->
+              <el-table-column label="选课详情">
+                <template slot-scope="scope">
+                  <el-button type="primary" :disableed="!scope.row.courseList" size="mini" @click="linkStudentInfo(scope.row)">查看选课</el-button>
+                </template>
               </el-table-column>
           </el-table>
 
@@ -314,6 +321,8 @@ export default {
       selectedStudentGenderId: 0,
       // 获取学生数据总条数
       total: 0,
+      // 保存被查看课程的用户id
+      chosenLookCosListStuId: 0,
       // 控制添加学生对话框的显示与隐藏
       addDialogVisible: false,
       // 控制编辑学生对话框的显示与隐藏
@@ -560,9 +569,6 @@ export default {
         .then(res => {
           // 获取学生列表信息以及学生数量
           this.studentList = res.data
-          // alert('学生列表长度：' + res.data.length)
-          // this.total = res.data.total
-          // console.log(res.data)
         }).catch(err => {
           console.log('获取学生列表失败！' + err)
           // return this.$message.error('获取学生列表失败！')
@@ -592,21 +598,14 @@ export default {
     async getAllRolesList () {
       await this.$http.get('/admin/listRole?pageSize=10&startPage=1')
         .then(res => {
-          // 获取所有角色列表信息
-          // res.data.forEach(item => {
-          //   this.allRolesList.push({ id: item.id, name: item.name })
-          // })
-          // alert('getRoleList:' + res.data)
+          // axios获取数据（角色列表）
           this.allRolesList = res.data
           this.allRolesList.forEach(item => {
             if (item.name === '学生') {
-              // this.chosenRoleIdAddStudent = item.id
               this.addStudentForm.role.id = item.id
               this.editStudentNaPForm.role.id = item.id
             }
           })
-          // console.log('获取的角色：' + this.allRolesList[2].id)
-          // console.log('获取的角色：' + this.allRolesList[2].name)
         }).catch(err => {
           console.log('获取所有角色列表失败！' + err)
           // return this.$message.error('获取所有角色列表失败！')
@@ -614,6 +613,7 @@ export default {
     },
     // 获取所有系列表
     async getDepartmentList () {
+      // axios异步获取数据
       await this.$http.get('/department/listDepartment?pageSize=20&startPage=1')
         .then(res => {
           this.departmentList = res.data
@@ -629,20 +629,21 @@ export default {
     },
     // 监听 页码值 改变的事件
     handleCurrentChange (newPage) {
-      // console.log('最新页码值： ' + newPage)
+      // 获取新页码
       this.queryInfo.currentPage = newPage
       this.getStudentList()
     },
     // 点击添加学生按钮展示添加对话框
     showAddStudentDialog () {
+      // 显示添加对话框
       this.addDialogVisible = true
     },
     // 点击编辑展示编辑学生姓名和重置密码对话框
     showeditStudentNaPDialog (student) {
+      // 姓名和密码的设置
       this.editStudentNaPForm.id = student.id
-      console.log('编辑学生id：', this.editStudentNaPForm.id)
+      // console.log('编辑学生id：', this.editStudentNaPForm.id)
       this.editStudentNaPForm.name = student.name
-      // this.editstudentForm.passwordBeforeMD5 = student.password
       this.editStudentNaPDialogVisible = true
     },
     // 监听添加学生对话框的关闭事件
@@ -671,12 +672,10 @@ export default {
       delete this.addStudentForm.idNumberBeforeMD5
       console.log('添加学生的信息：', this.addStudentForm)
       this.$refs.addStudentFormRef.validate(async valid => {
-        // console.log(valid)
         if (!valid) return
         await this.$http.post('/admin/addStudent', this.addStudentForm)
           .then(res => {
             if (res.data.code === 400) {
-              // this.$refs.addStudentFormRef.resetFields()
               return this.$message.error('添加学生失败')
             }
             if (res.status === 200 && res.data.code !== 400) {
@@ -688,9 +687,9 @@ export default {
             console.log('添加学生失败！' + err)
             // 隐藏添加学生的对话框
             this.addDialogVisible = false
-            // return this.$message.error('获取所有角色列表失败！')
+            return this.$message.error('获取所有角色列表失败！')
           })
-        // this.$message.success('添加学生成功')
+        this.$message.success('添加学生成功')
         // 重新获取学生列表数据
         this.getStudentList()
       })
@@ -784,7 +783,6 @@ export default {
     },
     // 编辑(或修改)学生信息
     async updateStuInfo () {
-      console.log('传回的入学日期', this.editStudentInfoForm.entranceDate)
       const dEntrance = new Date(this.editStudentInfoForm.entranceDate)
       this.editStudentInfoForm.entranceDate = dEntrance.getFullYear() + '-' + this.p((dEntrance.getMonth() + 1)) + '-' + this.p(dEntrance.getDate())
       const dBirth = new Date(this.editStudentInfoForm.birth)
@@ -822,6 +820,15 @@ export default {
           item.entranceDate = item.entranceDate.substr(0, 7)
         }
       })
+    },
+    // 跳转到学生基本信息页进行修改
+    linkStudentInfo (student) {
+      this.chosenLookCosListStuId = student.id
+      const studentInfo = JSON.stringify(student.courseList)
+      window.sessionStorage.setItem('studentCourseInfo', studentInfo)
+      // 全局组件传递参数
+      eventBus.$emit('stuId', student.id)
+      this.$router.push('studentInfo')
     }
   }
 }

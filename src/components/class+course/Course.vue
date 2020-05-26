@@ -35,8 +35,6 @@
               <el-table-column label="课程id" prop="id"></el-table-column>
               <el-table-column label="课程名称" prop="name"></el-table-column>
               <el-table-column label="课程代码" prop="number"></el-table-column>
-              <el-table-column label="课程类型" prop="courseType">
-              </el-table-column>
               <el-table-column label="开课学院" column-key="courseDep" prop="courseDep"
                 :filters="departmentListFilterArr"
                 :filter-method="filterDepHandler">
@@ -44,6 +42,7 @@
               <!-- <el-table-column label="开课学院" prop="courseDep"></el-table-column> -->
               <el-table-column label="学分" prop="score"></el-table-column>
               <el-table-column label="学时" prop="time"></el-table-column>
+              <el-table-column label="课程类型" prop="courseType"></el-table-column>
               <el-table-column label="课程种类" prop="courseClass">
                 <template slot-scope="scope">
                   <el-tag
@@ -53,18 +52,18 @@
                   </el-tag>
                 </template>
               </el-table-column>
-              <!-- <el-table-column label="授课教师" prop="teacher.name">
-                <template slot-scope="scope">
-                  <el-tag type='danger' disable-transitions>{{scope.row.teacher.name}}</el-tag>
-                </template>
-              </el-table-column> -->
               <!-- <el-table-column label="权限名称" prop="permission"></el-table-column> -->
               <el-table-column label="操作" width="350px">
                 <template slot-scope="scope">
                   <el-button type="primary" icon="el-icon-edit" size='mini' @click="showEditCourseDialog(scope.row)">编辑课程</el-button>
                   <!-- <el-button type="primary" icon="el-icon-edit" size='mini'>编辑</el-button> -->
-                  <!-- <el-button type="danger" icon="el-icon-delete" size='mini'>删除权限</el-button> -->
+                  <!-- <el-button type="danger" icon="el-icon-delete" size='mini'>查看开课情况</el-button> -->
                   <el-button type="danger" icon="el-icon-delete" size='mini' @click="deleteCourse(scope.row.id)">删除课程</el-button>
+                </template>
+              </el-table-column>
+              <el-table-column label="开课情况" width="350px">
+                <template slot-scope="scope">
+                  <el-button type="success" size='mini' @click="linkCourseTearcherInfo(scope.row)">查看</el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -498,6 +497,23 @@ export default {
       // const property = column.entranceDate
       return row.entranceDate === value
     },
+    // 查看课程对应的开课情况(教授该课程的老师以及课程信息)
+    linkCourseTearcherInfo (courseTeacherInfo) {
+      // console.log('student courseList：', student.courseList)
+      // const courseInfo = JSON.stringify(courseTeacherInfo)
+      // console.log('stringfy stuCourseList:', studentInfo)
+      const courseName = JSON.stringify(courseTeacherInfo.name)
+      window.sessionStorage.setItem('courseName', courseName)
+      // 路由跳转到开课情况界面
+      this.$router.push('courseTeacherInfo')
+      // 全局组件传递参数
+      // eventBus.$emit('classId', aclass.id)
+
+      // query要用path来引入,接收参数都是this.$route.query.name。query类似于ajax中get传参，即在浏览器地址栏中显示参数。
+      // params要用name来引入，接收参数都是this.$route.params.name。params则类似于post，即在浏览器地址栏中不显示参数。
+      // 路由跳转选课详情界面
+      // this.$router.push({name: 'courseTeacherInfo', params: {name: 'abc', courseName: JSON.stringify(courseTeacherInfo.name)}})
+    }
   }
 }
 </script>

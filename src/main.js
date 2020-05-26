@@ -17,6 +17,8 @@ axios.defaults.baseURL = process.env.NODE_ENV === 'production'? 'http://localhos
 Vue.prototype.$http = axios
 // 以后使用this.$md5('加密内容')
 Vue.prototype.$md5 = md5
+// 全局定义一个eventBus传递数据（注册全局对象）
+window.eventBus = new Vue()
 
 //Echarts图标组件
 import ECharts from 'vue-echarts'
