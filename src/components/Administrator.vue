@@ -99,14 +99,29 @@
                 <el-submenu index="4">
                     <template slot="title">
                         <i class="el-icon-menu"></i>
-                        <span slot="title">教学情况查看</span>
+                        <span slot="title">教学情况管理</span>
                     </template>
                     <!-- 二级菜单 -->
                     <!-- index可以动态链接为 index="'/' + subItem.path(就是通过接口返回的path属性，例如users)" -->
                     <el-menu-item index="/teachingSituation">
                         <template slot="title">
                             <i class="el-icon-menu"></i>
-                            <span slot="title">教学情况</span>
+                            <span slot="title">教学情况查看</span>
+                        </template>
+                    </el-menu-item>
+                </el-submenu>
+                <!-- 一级菜单 -->
+                <el-submenu index="5">
+                    <template slot="title">
+                        <i class="el-icon-menu"></i>
+                        <span slot="title">用户行为管理</span>
+                    </template>
+                    <!-- 二级菜单 -->
+                    <!-- index可以动态链接为 index="'/' + subItem.path(就是通过接口返回的path属性，例如users)" -->
+                    <el-menu-item index="/showBurailData">
+                        <template slot="title">
+                            <i class="el-icon-menu"></i>
+                            <span slot="title">用户行为查看</span>
                         </template>
                     </el-menu-item>
                 </el-submenu>

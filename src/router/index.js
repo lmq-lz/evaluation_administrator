@@ -1,6 +1,8 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
 import Login from '../components/Login'
+import BuryDataTest1 from '../components/BuryDataTest1'
+
 import Administrator from '../components/Administrator'
 import Welcome from '../components/Welcome'
 import Student from '../components/user/Student'
@@ -20,12 +22,15 @@ import ChangePwd from '../components/pwd/ChangePwd.vue'
 import ForgetPwd from '../components/pwd/ForgetPwd.vue'
 //查看评价详情页面
 import TeacherCourseCheck from '../components/teachingSituation/TeacherCourseCheck.vue'
+//查看埋点数据
+import ShowBurailData from '../components/showData/ShowBurailData'
 
 Vue.use(VueRouter)
 
 const routes = [
   { path: '/', redirect: '/login' },
   { path: '/login', name: 'login', component: Login },
+  { path: '/buryDataTest1', name: 'buryDataTest1', component: BuryDataTest1 },
   //初始化密码 (忘记密码)页面
   { path: '/initpwd', component: ForgetPwd },
   {
@@ -52,7 +57,9 @@ const routes = [
       { path: '/teachingSituation', component: TeachingSituation },
       { path: '/teacherCourseCheck', component: TeacherCourseCheck},
       //修改密码页面
-      { path: '/changepwd', component: ChangePwd}
+      { path: '/changepwd', component: ChangePwd},
+      //展示埋点数据页面
+      { path: '/showBurailData',name: 'showBurailData', component: ShowBurailData}
     ]
     // meta:
     // {

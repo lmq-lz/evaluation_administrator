@@ -535,7 +535,17 @@ export default {
       // 当前被编辑权限的用户的角色id
       selectedStudentRoleId: '',
       // 当前被编辑权限的用户的用户id
-      selectedStudentId: ''
+      selectedStudentId: '',
+      // 埋点数据的表单
+      dataBurialForm : {
+        id: 0,
+        // 菜单选项(例如：用户管理，授课管理)
+        module: '',
+        // 子菜单选项(例如：学生管理，班级管理，课程管理，角色管理等等)
+        subModule: '',
+        // 埋点的操作(例如：添加学生，编辑，删除，查看开课情况等)
+        operate: ''
+      }
     }
   },
   created () {
@@ -671,6 +681,7 @@ export default {
       delete this.addStudentForm.passwordBeforeMD5
       delete this.addStudentForm.idNumberBeforeMD5
       console.log('添加学生的信息：', this.addStudentForm)
+      // var data
       this.$refs.addStudentFormRef.validate(async valid => {
         if (!valid) return
         await this.$http.post('/admin/addStudent', this.addStudentForm)
@@ -689,7 +700,7 @@ export default {
             this.addDialogVisible = false
             return this.$message.error('获取所有角色列表失败！')
           })
-        this.$message.success('添加学生成功')
+        // this.$message.success('添加学生成功')
         // 重新获取学生列表数据
         this.getStudentList()
       })

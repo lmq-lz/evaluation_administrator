@@ -194,10 +194,11 @@ export default {
     // 获取所有权限数量
     async getRolesTotal () {
       // 为了获取total进行axios请求(假设权限数不超过20)
-      await this.$http.get('/admin/listPerms?pageSize=20&startPage=1')
+      await this.$http.get('/admin/listRole?pageSize=20&startPage=1')
         .then(res => {
           // 获取所有学生数量
           // alert(res.data.length)
+          // console.log('所有角色：', res.data)
           this.total = res.data.length
           // console.log(res.data)
         }).catch(err => {
@@ -221,9 +222,9 @@ export default {
     // 获取所有角色列表
     async getRolesList () {
       // axios获取角色列表数据
-      await this.$http.get('/admin/listRole?pageSize=20&startPage=1')
+      await this.$http.get('/admin/listRole?pageSize=' + this.queryInfo.pageSize + '&startPage=' + this.queryInfo.currentPage)
         .then(res => {
-          // 获取学生列表信息以及学生数量
+          // 获取角色权限
           this.rolesList = res.data
           // console.log('角色列表数据：' + res.data)
           console.log('获取角色列表成功')
@@ -237,13 +238,13 @@ export default {
     handleSizeChange (newSize) {
       // console.log('页面显示最多条数：' + newSize)
       this.queryInfo.pageSize = newSize
-      this.getRightsList()
+      this.getRolesList()
     },
     // 监听 页码值 改变的事件
     handleCurrentChange (newPage) {
       // console.log('最新页码值： ' + newPage)
       this.queryInfo.currentPage = newPage
-      this.getRightsList()
+      this.getRolesList()
     },
     // 根据id删除对应的权限(角色id,权限id)
     async removeRightById (role, rightsId) {
