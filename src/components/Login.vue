@@ -91,6 +91,8 @@
     },
     created() {
       window.sessionStorage.clear()
+      var userInfo = { id: 1, name: 'admin' }
+      window.sessionStorage.setItem('user', JSON.stringify(userInfo))
     },
     methods: {
       // 重置表单
@@ -121,6 +123,19 @@
               window.sessionStorage.setItem('token', role_id + username)
 
               if (role_id == '1') {
+                console.log('登录用户数据：', res.data)
+
+                // 触发埋点事件(访问)给用户行为详细内容赋值
+                this.$global_dataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
+                // console.log('用户id：', this.$global_dataBurialForm.id)
+                this.$global_dataBurialForm.module = '页面访问'
+                this.$global_dataBurialForm.subModule = '登录页面'
+                this.$global_dataBurialForm.operate = '成功登录'
+                console.log('表单数据：', this.$global_dataBurialForm)
+                // 上报事件（上传用户行为内容）
+                this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+                
+                // 登录成功就转向管理员页面，同时触发埋点事件(访问登录页面)
                 this.$router.push('/Administrator')
                 this.$message.success('登录成功')
               }

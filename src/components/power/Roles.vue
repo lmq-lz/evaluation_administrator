@@ -186,9 +186,24 @@ export default {
     }
   },
   created () {
+
     this.getRolesTotal()
     this.getRolesList()
     this.getRightsList()
+
+    // 给用户行为详细内容赋值（页面统一id,module,subModule）
+    // 具体operate在具体事件中指定
+    this.$global_dataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
+    this.$global_dataBurialForm.module = '权限管理'
+    this.$global_dataBurialForm.subModule = '角色管理'
+
+    // 给用户行为详细内容赋值（页面统一id,module,subModule）
+    // 具体operate在具体事件中指定
+    this.$global_webPageDataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
+    this.$global_webPageDataBurialForm.subModule = '角色管理页面'
+    console.log('网页表单：', this.$global_webPageDataBurialForm)
+    // 上报事件（访问页面）
+    this.reportDataBurial('/userBehavior/add', this.$global_webPageDataBurialForm)
   },
   methods: {
     // 获取所有权限数量
@@ -259,7 +274,8 @@ export default {
         return this.$message.info('取消了删除！')
       }
 
-      // console.log('成功删除权限')
+      // 判断删除事件是否执行成功
+      var isDeleteOperateSuccess = false
 
       const { data: res } = await this.$http.delete('admin/deleteRole?roleId=' + role.id + 'rightsId=' + rightsId)
       if (res.status !== 200) {
@@ -343,32 +359,43 @@ export default {
       this.$refs.addRoleFormRef.resetFields()
     },
     // 添加角色事件
+    // （埋点）
     addRole () {
+      // 判断添加学生事件是否执行成功
+      var isAddOperateSuccess = false
       this.$refs.addRoleFormRef.validate(async valid => {
         if (!valid) return
-        // 可以发起添加用户的网络请求
-        // const { data: res } = await this.$http.post('/admin/addRole', this.addRoleForm)
-        // if (res.status !== 201) {
-        //   const errMsg = this.$message.error('添加角色失败')
-        //   // return errMsg
-        // } else if ( res.status === 200) {
-        //   console.log('添加角色成功')
-        //   this.$message.success('添加角色成功')
-        // }
         await this.$http.post('/admin/addRole', this.addRoleForm)
           .then(res => {
             if (res.data.code === 400) {
               return this.$message.error('添加角色失败')
             }
             if (res.status === 200 && res.data.code !== 400) {
+              // 添加操作成功 
+              this.isAddOperateSuccess = true
               return this.$message.success('添加角色成功！')
             }
           }).catch(err => {
-            console.log('添加学生失败！' + err)
+            console.log('添加角色失败！ErrMsg：' + err)
             // return this.$message.error('获取所有角色列表失败！')
           })
         // 隐藏添加用户的对话框
         this.addRoleDialogVisible = false
+
+        // 添加操作成功就向后端上报此事件
+        // 埋点
+        if(this.isAddOperateSuccess) {
+          // 给用户行为详细内容赋值
+          // this.$global_dataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
+          // // console.log('用户id：', this.$global_dataBurialForm.id)
+          // this.$global_dataBurialForm.module = '用户管理'
+          // this.$global_dataBurialForm.subModule = '学生管理'
+          this.$global_dataBurialForm.operate = '添加角色'
+          console.log('表单数据：', this.$global_dataBurialForm)
+          // 上报事件（上传用户行为内容）
+          this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+        }
+
         // 重新获取用户列表数据
         this.getRolesList()
       })
@@ -391,9 +418,8 @@ export default {
       // delete this.allRightsList
     },
     // 分配权限事件
-    allotRights () {
-      // const keys = []
-      // console.log('被选中的权限：', this.savedCheckedPerms)
+    // 埋点
+    async allotRights () {
       // 向分配权限表单中添加权限列表
       this.allotSomeRolePermsForm = []
       this.allRightsList.forEach( allRightItem => {
@@ -406,29 +432,69 @@ export default {
           }
         })
       })
-      // console.log('分配权限：', this.allotSomeRolePermsForm)
+
+
+      // 判断编辑事件是否执行成功
+      var isUpdateOperateSuccess = false
       // axios请求分配某角色某权限
-      this.allotSomeRolePermsForm.forEach( item => {
+      await this.allotSomeRolePermsForm.forEach( item => {
         console.log('请求参数：', item)
+        this.isUpdateOperateSuccess = false
         this.$http.post('/admin/addRolePermission?permsId=' + item.id + '&roleId=' + this.chosenRoleId)
         .then(res => {
-          console.log('权限添加成功！')
+          if(res.status === 200) {
+            this.isUpdateOperateSuccess = true
+            this.$global_dataBurialForm.operate = '分配权限'
+            // 上报事件（上传用户行为内容）
+            this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+            console.log('权限添加成功！', this.isUpdateOperateSuccess)
+          } else {
+            console.log('权限添加失败！')
+          }
         }).catch(err => {
           console.log('权限添加失败！' + err)
           // return this.$message.error('权限添加失败！')
         })
+
       })
-      this.getRolesList()
+      // 添加操作成功就向后端上报此事件
+      // 埋点
+      // if (this.isUpdateOperateSuccess) {
+      //   console.log('埋点上报事件成功！')
+      //   this.$global_dataBurialForm.operate = '编辑'
+      //   // 上报事件（上传用户行为内容）
+      //   this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+      // } else {
+      //   console.log('isUpdateOperateSuccess=', this.isUpdateOperateSuccess)
+      // }
       // 分配权限对话框关闭
       this.setRightDialogVisible = false
+      this.getRolesList()
+      
     },
     // 删除角色
+    // （埋点）
     deleteRole (rid) {
+      var isDeleteOperateSuccess = false
       this.$http.delete('/admin/deleteRole?id=' + rid)
         .then(res => {
           // 删除角色成功
           console.log('角色删除成功！')
-          return this.$message.success('删除角色成功！')
+          if (res.status === 200) {
+            this.isDeleteOperateSuccess = true
+
+            // 删除操作成功就向后端上报此事件
+            // 埋点
+            if(this.isDeleteOperateSuccess) {
+              this.$global_dataBurialForm.operate = '删除角色'
+              // 上报事件（上传用户行为内容）
+              this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+            }
+
+            return this.$message.success('删除角色成功！')
+          } else {
+            console.log('删除角色失败！')
+          }
         }).catch(err => {
           console.log('角色删除失败！' + err)
           // return this.$message.error('角色删除失败！')

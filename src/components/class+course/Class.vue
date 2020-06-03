@@ -335,10 +335,26 @@ export default {
     }
   },
   created () {
+
+
     // alert('用户名：' + sessionStorage.getItem('username'))
     this.getClassTotal()
     this.getDepartmentList()
     this.getClassList()
+
+    // 给用户行为详细内容赋值（页面统一id,module,subModule）
+    // 具体operate在具体事件中指定
+    this.$global_dataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
+    this.$global_dataBurialForm.module = '授课管理'
+    this.$global_dataBurialForm.subModule = '班级管理'
+    
+    // 给用户行为详细内容赋值（页面统一id,module,subModule）
+    // 具体operate在具体事件中指定
+    this.$global_webPageDataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
+    this.$global_webPageDataBurialForm.subModule = '班级管理页面'
+    console.log('网页表单：', this.$global_webPageDataBurialForm)
+    // 上报事件（访问页面）
+    this.reportDataBurial('/userBehavior/add', this.$global_webPageDataBurialForm)
   },
   methods: {
     // 获取所有班级数量
@@ -392,6 +408,7 @@ export default {
       this.getClassList()
     },
     // 通过班级id删除班级
+    // 埋点
     async deleteClass (id) {
       // 弹框询问是否删除班级数据
       const confirmResult = await this.$confirm('此操作将永久删除该班级, 是否继续?', '提示', {
@@ -401,6 +418,8 @@ export default {
       }).catch(err => {
         return err
       })
+      // 判断删除事件是否执行成功
+      var isDeleteOperateSuccess = false
       // 如果点击确定，confirmResult返回值为字符串 confirm，点击取消返回值为字符串 cancel
       if (confirmResult !== 'confirm') {
         return this.$message.info('已取消删除！123')
@@ -408,6 +427,8 @@ export default {
       await this.$http.delete('/classe/deleteClass/{id}?id=' + id)
         .then(res => {
           if (res.status !== 200) {
+            // 删除操作成功 
+            this.isDeleteOperateSuccess = true
             return this.$message.error('删除班级失败！')
             // 刷新页面
             this.getClassList()
@@ -418,6 +439,14 @@ export default {
       // 重新获取班级数据
       this.getClassTotal()
       this.getClassList()
+  
+      // 删除操作成功就向后端上报此事件
+      // 埋点
+      if(this.isDeleteOperateSuccess) {
+        this.$global_dataBurialForm.operate = '删除课程'
+        // 上报事件（上传用户行为内容）
+        this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+      }
     },
     // 监听添加班级对话框的关闭事件
     addClassDialogClosed () {
@@ -435,7 +464,10 @@ export default {
       this.editClassDialogVisible = true
     },
     // 点击按钮添加班级
+    // 埋点
     addClass () {
+      // 判断添加事件是否执行成功
+      var isAddOperateSuccess = false
       this.$refs.addClassFormRef.validate(async valid => {
         if (!valid) return
         console.log('添加班级的信息：', this.addClassForm)
@@ -447,6 +479,7 @@ export default {
             } else {
               // 请求返回状态码是200，表示成功
               if (res.status === '200') {
+                this.isAddOperateSuccess = true
                 return this.$message.success('添加班级成功！')
               }
             }
@@ -456,30 +489,46 @@ export default {
       })
       // 隐藏添加班级对话框
       this.addClassDialogVisible = false
+      // 添加操作成功就向后端上报此事件
+      // 埋点
+      if(this.isAddOperateSuccess) {
+        // 给用户行为详细内容赋值
+        this.$global_dataBurialForm.operate = '添加班级'
+        console.log('表单数据：', this.$global_dataBurialForm)
+        // 上报事件（上传用户行为内容）
+        this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+      }
       // 重新获取班级列表
       this.getClassTotal()
       this.getClassList()
     },
     // 修改班级
+    // 埋点
     async updateClass () {
       // alert('被选择的系id：' + this.chosenDepId)
       this.editClassForm.departmentId = this.chosenDepId
       // this.$refs.editClassFormRef._method = 'put'
-      var httpIsSuccess = false
+      var isUpdateOperateSuccess = false
       await this.$http.put('/classe/updateClass', this.editClassForm)
         .then(function (response) {
           if (response.status === 200) {
-            httpIsSuccess = true
+            isUpdateOperateSuccess = true
           }
           // alert(response.status)
         }).catch(function (err) {
           console.log('编辑班级请求失败 errMsg：' + err)
         })
-      if (httpIsSuccess) {
-        this.getClassList()
-      }
       // 关闭编辑班级对话框
       this.editClassDialogVisible = false
+      // 添加操作成功就向后端上报此事件
+      // 埋点
+      if(this.isUpdateOperateSuccess) {
+        this.$global_dataBurialForm.operate = '编辑班级'
+        // 上报事件（上传用户行为内容）
+        this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+        this.getClassList()
+      }
+      this.getStudentList()
     },
     // 选中值发生变化时触发
     change () {
@@ -493,6 +542,11 @@ export default {
       window.sessionStorage.setItem('classCourseInfo', courseInfo)
       // 全局组件传递参数
       eventBus.$emit('classId', aclass.id)
+      // 给用户行为详细内容赋值
+      this.$global_dataBurialForm.operate = '查看选课'
+      console.log('表单数据：', this.$global_dataBurialForm)
+      // 上报事件（上传用户行为内容）
+      this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
       // 路由跳转选课详情界面
       this.$router.push('classCourseInfo')
     }

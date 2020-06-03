@@ -630,11 +630,19 @@ export default {
     }
   },
   created () {
-    // alert('加密内容：' + this.$md5('123'))
+
     // this.getAllRolesList()
     this.getTeacherTotal()
     this.getTeacherList()
     this.getDepartmentList()
+        
+    // 给用户行为详细内容赋值（页面统一id,module,subModule）
+    // 具体operate在具体事件中指定
+    this.$global_webPageDataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
+    this.$global_webPageDataBurialForm.subModule = '教师管理页面'
+    // console.log('网页表单：', this.$global_webPageDataBurialForm)
+    // 上报事件（访问页面）
+    this.reportDataBurial('/userBehavior/add', this.$global_webPageDataBurialForm)
   },
   methods: {
     // 获取所有教师数量

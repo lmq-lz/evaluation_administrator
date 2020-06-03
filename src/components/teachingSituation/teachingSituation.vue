@@ -68,6 +68,22 @@
 		created() {
 			this.pageinfo.pageSum = this.courseList.length
 			this.getCourseList()
+
+
+			// 给用户行为详细内容赋值（页面统一id,module,subModule）
+			// 具体operate在具体事件中指定
+			this.$global_webPageDataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
+			this.$global_webPageDataBurialForm.subModule = '教学情况查看页面'
+			console.log('网页表单：', this.$global_webPageDataBurialForm)
+			// 上报事件（访问页面）
+			this.reportDataBurial('/userBehavior/add', this.$global_webPageDataBurialForm)
+			
+			// 给用户行为详细内容赋值（页面统一id,module,subModule）
+			// 具体operate在具体事件中指定
+			this.$global_dataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
+			this.$global_dataBurialForm.module = '教学情况管理'
+			this.$global_dataBurialForm.subModule = '教学情况查看'
+
 		},
 		methods: {
 			// 请求课程数据列表，按页码
@@ -105,23 +121,30 @@
 				this.getCourseList()
 			},
 			// 跳转到评价详情
+			// 埋点
 			checkAppraise(row) {
 				let rowstr = JSON.stringify(row)
-        console.log(row)
+        		console.log(row)
 				window.sessionStorage.setItem('courseCheckItem', rowstr)
-        this.$router.push('/teacherCourseCheck')
+				this.$router.push('/teacherCourseCheck')
 
-        //测试接口
-        // this.$http.get('/evaluation/admin/summaryEvaluation/byTeacherId', {
-        //   params:{
-        //     courseId: row.id,
-        //     teacherId: row.teacher.id
-        //   }
-        // }).then(res =>{
-        //   console.log(res.data)
-        // }).catch(err => {
-        //   console.log(err)
-        // })
+				// 上报事件（删除更换用户行为内容）
+				// 埋点
+				this.$global_dataBurialForm.operate = '详情'
+				console.log('表单数据：', this.$global_dataBurialForm)
+				// 上报事件（上传用户行为内容）
+				this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+				//测试接口
+				// this.$http.get('/evaluation/admin/summaryEvaluation/byTeacherId', {
+				//   params:{
+				//     courseId: row.id,
+				//     teacherId: row.teacher.id
+				//   }
+				// }).then(res =>{
+				//   console.log(res.data)
+				// }).catch(err => {
+				//   console.log(err)
+				// })
 			}
 		}
 	}

@@ -96,7 +96,7 @@
           <el-form :model="addStudentForm" :rules="addStudentFormRules" ref="addStudentFormRef" label-width="70px">
             <!-- prop是验证规则rules(即addStudentFormRules)的属性 -->
             <el-form-item label="姓名" prop="name">
-              <el-input v-model="addStudentForm.name"></el-input>
+              <el-input v-model="addStudentFormStuName"></el-input>
             </el-form-item>
             <el-form-item label="密码" prop="passwordBeforeMD5">
               <el-input v-model="addStudentForm.passwordBeforeMD5"></el-input>
@@ -118,7 +118,7 @@
             </el-form-item>
             <el-form-item label="出生日期" prop="birth">
               <el-date-picker
-                v-model="addStudentForm.birth"
+                v-model="addStudentFormBirth"
                 type="date"
                 placeholder="选择日期" :picker-options="pickerDateOptions">
               </el-date-picker>
@@ -135,7 +135,7 @@
             </el-form-item>
             <el-form-item label="系名称">
               <template>
-                <el-select v-model="addStudentForm.aclass.departmentId">
+                <el-select v-model="addStudentForm.aclass.department.id">
                   <el-option
                     v-for="item in departmentList"
                     :key="item.id"
@@ -329,10 +329,16 @@ export default {
       editStudentNaPDialogVisible: false,
       // 控制分配角色对话框的显示与隐藏
       editStudentInfoDialogVisible: false,
+      // 以下两个数据姓名和出生日期设置原因：表单元素突然之间不能绑定addStudentForm中的name和birth属性
+      // 只有单独设置属性并在添加请求之前赋值给addStudentForm
+      addStudentFormStuName: '',
+      addStudentFormBirth: '',
       // 添加学生的表单数据
       addStudentForm: {
         aclass: {
-          departmentId: 0,
+          department: {
+            id: 0
+          },
           grade: "string",
           id: 0,
           name: "string",
@@ -389,14 +395,14 @@ export default {
       // chosenRoleIdAddStudent: 1,
       // 添加表单的验证规则对象
       addStudentFormRules: {
-        name: [
-          {
-            required: true, message: '请输入学生名', trigger: 'blur'
-          },
-          {
-            min: 2, max: 15, message: '学生名的长度在2~15个字符之间', trigger: 'blur'
-          }
-        ],
+        // name: [
+        //   {
+        //     required: true, message: '请输入学生名', trigger: 'blur'
+        //   },
+        //   {
+        //     min: 2, max: 15, message: '学生名的长度在2~15个字符之间', trigger: 'blur'
+        //   }
+        // ],
         region: [
           {
             required: true, message: '请输入家庭住址', trigger: 'blur'
@@ -535,26 +541,50 @@ export default {
       // 当前被编辑权限的用户的角色id
       selectedStudentRoleId: '',
       // 当前被编辑权限的用户的用户id
-      selectedStudentId: '',
+      selectedStudentId: ''
       // 埋点数据的表单
-      dataBurialForm : {
-        id: 0,
-        // 菜单选项(例如：用户管理，授课管理)
-        module: '',
-        // 子菜单选项(例如：学生管理，班级管理，课程管理，角色管理等等)
-        subModule: '',
-        // 埋点的操作(例如：添加学生，编辑，删除，查看开课情况等)
-        operate: ''
-      }
+      // dataBurialForm : {
+      //   createDate: '',
+      //   id: 1,
+      //   // 菜单选项(例如：用户管理，授课管理)
+      //   module: '用户管理',
+      //   name: '',
+      //   // 埋点的操作(例如：添加学生，编辑，删除，查看开课情况等)
+      //   operate: '编辑',
+      //   role: '管理员',
+      //   // 子菜单选项(例如：学生管理，班级管理，课程管理，角色管理等等)
+      //   subModule: '学生管理',
+      //   username: 'admin'
+      // }
     }
   },
   created () {
+    // 数据上报测试
+    // this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+    // this.reportData()
+
     // 获取基本数据
     this.getAllRolesList()
     this.getStudentTotal()
     this.getStudentList()
     this.getClassList()
     this.getDepartmentList()
+
+    // 给用户行为详细内容赋值（页面统一id,module,subModule）
+    // 具体operate在具体事件中指定
+    this.$global_dataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
+    this.$global_dataBurialForm.module = '用户管理'
+    this.$global_dataBurialForm.subModule = '学生管理'
+    // this.$global_dataBurialForm.operate = '添加学生'
+
+    // 给用户行为详细内容赋值（页面统一id,module,subModule）
+    // 具体operate在具体事件中指定
+    this.$global_webPageDataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
+    this.$global_webPageDataBurialForm.subModule = '学生管理页面'
+    console.log('网页表单：', this.$global_webPageDataBurialForm)
+    // 上报事件（访问页面）
+    this.reportDataBurial('/userBehavior/add', this.$global_webPageDataBurialForm)
+
   },
   methods: {
     // 获取所有学生数量
@@ -571,6 +601,16 @@ export default {
           // return this.$message.error('获取学生列表失败！')
         })
     },
+    // 埋点：上报添加学生的事件
+    // async reportData () {
+    //   console.log('埋点数据表单：', this.dataBurialForm)
+    //   await this.$http.post('/userBehavior/add', this.dataBurialForm)
+    //     .then(res => {
+    //       console.log('局部函数上报成功')
+    //     }).catch(err => {
+    //       console.log('局部函数上报失败！', err)
+    //     })
+    // },
     // 获取所有学生列表(含分页参数)
     async getStudentList () {
       // console.log('管理员姓名')
@@ -670,10 +710,15 @@ export default {
     },
     // 点击按钮添加新学生
     addStudent () {
+      // console.log('添加学生姓名为：', this.addStudentFormStuName)
+      // console.log('添加学生birth为：', this.addStudentFormBirth)
+      this.addStudentForm.name = this.addStudentFormStuName
+      this.addStudentForm.birth = this.addStudentFormBirth
       // 入学时间和出生日期的格式化
-      const dEntrance = new Date(this.addStudentForm.entranceDate.substr)
+      const dEntrance = new Date(this.addStudentForm.entranceDate)
       this.addStudentForm.entranceDate = dEntrance.getFullYear() + '-' + this.p((dEntrance.getMonth() + 1)) + '-' + this.p(dEntrance.getDate())
-      const dBirth = new Date(this.addStudentForm.birth.substr)
+      // const dBirth = new Date(this.addStudentForm.birth)
+      const dBirth = new Date(this.addStudentFormBirth)
       this.addStudentForm.birth = dBirth.getFullYear() + '-' + this.p((dBirth.getMonth() + 1)) + '-' + this.p(dBirth.getDate())
       // 密码与身份证的加密
       this.addStudentForm.password = this.$md5(this.addStudentForm.passwordBeforeMD5)
@@ -681,7 +726,8 @@ export default {
       delete this.addStudentForm.passwordBeforeMD5
       delete this.addStudentForm.idNumberBeforeMD5
       console.log('添加学生的信息：', this.addStudentForm)
-      // var data
+      // 判断添加学生事件是否执行成功
+      var isAddOperateSuccess = false
       this.$refs.addStudentFormRef.validate(async valid => {
         if (!valid) return
         await this.$http.post('/admin/addStudent', this.addStudentForm)
@@ -692,6 +738,8 @@ export default {
             if (res.status === 200 && res.data.code !== 400) {
               // 隐藏添加学生的对话框
               this.addDialogVisible = false
+              // 添加操作成功 
+              this.isAddOperateSuccess = true
               return this.$message.success('添加学生成功！')
             }
           }).catch(err => {
@@ -700,7 +748,20 @@ export default {
             this.addDialogVisible = false
             return this.$message.error('获取所有角色列表失败！')
           })
-        // this.$message.success('添加学生成功')
+
+        // 添加操作成功就向后端上报此事件
+        if(this.isAddOperateSuccess) {
+          // 给用户行为详细内容赋值
+          // this.$global_dataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
+          // // console.log('用户id：', this.$global_dataBurialForm.id)
+          // this.$global_dataBurialForm.module = '用户管理'
+          // this.$global_dataBurialForm.subModule = '学生管理'
+          this.$global_dataBurialForm.operate = '添加学生'
+          console.log('表单数据：', this.$global_dataBurialForm)
+          // 上报事件（上传用户行为内容）
+          this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+        }
+
         // 重新获取学生列表数据
         this.getStudentList()
       })
@@ -720,6 +781,8 @@ export default {
       }).catch(err => {
         return err
       })
+      // 判断删除事件是否执行成功
+      var isDeleteOperateSuccess = false
       // console.log('点击了删除对话框的 ' + confirmResult)
       // 如果学生点击确定，confirmResult返回值为字符串 confirm，点击取消返回值为字符串 cancel
       if (confirmResult !== 'confirm') {
@@ -731,12 +794,21 @@ export default {
           if (res.status !== 200) {
             return this.$message.error('删除学生失败！')
           } else {
+            // 删除操作成功 
+            this.isDeleteOperateSuccess = true
             console.log(res.massage + '删除学生成功！')
           }
           this.getStudentList()
         }).catch(err => {
           console.log('删除学生失败！' + err)
         })
+
+      // 删除操作成功就向后端上报此事件
+      if(this.isDeleteOperateSuccess) {
+        this.$global_dataBurialForm.operate = '删除'
+        // 上报事件（上传用户行为内容）
+        this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+      }
     },
     // 展示编辑角色对话框
     showeditStudentInfoDialog (student) {
@@ -799,9 +871,13 @@ export default {
       const dBirth = new Date(this.editStudentInfoForm.birth)
       this.editStudentInfoForm.birth = dBirth.getFullYear() + '-' + this.p((dBirth.getMonth() + 1)) + '-' + this.p(dBirth.getDate())
       console.log('update 修改学生信息：', this.editStudentInfoForm)
+      // 判断编辑事件是否执行成功
+      var isUpdateOperateSuccess = false
       await this.$http.put('/admin/updateStudent', this.editStudentInfoForm)
           .then(res => {
             if (res.status === 200) {
+              // 编辑操作成功就触发数据埋点事件（将用户行为内容发送给服务器）
+              this.isUpdateOperateSuccess = true
               console.log('更新学生信息成功！')
               return this.$message.success('更改学生信息成功！')
             }
@@ -809,6 +885,12 @@ export default {
             console.log('更改学生信息失败 errMsg ' + err)
           })
         this.editStudentInfoDialogVisible = false
+        // 添加操作成功就向后端上报此事件
+        if(this.isUpdateOperateSuccess) {
+          this.$global_dataBurialForm.operate = '编辑'
+          // 上报事件（上传用户行为内容）
+          this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+        }
         this.getStudentList()
     },
     // 模糊搜寻学生

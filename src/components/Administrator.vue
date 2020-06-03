@@ -23,9 +23,9 @@
                 background-color="#333744"
                 text-color="#fff"
                 active-text-color="#409eff" :unique-opened="true" :collapse="isCollapse" :collapse-transition="false"
-                :router="true" :default-active="activePath">
+                :router="true" :default-active="activePath" @open="webPageDataBurial">
                 <!-- 一级菜单 -->
-                <el-submenu index="1">
+                <el-submenu index="用户管理">
                     <!-- 一级菜单模板区域 -->
                     <template slot="title">
                     <!-- 一级菜单图标 -->
@@ -54,9 +54,9 @@
                     </el-menu-item>
                 </el-submenu>
                 <!-- 一级菜单 -->
-                <el-submenu index="2">
+                <el-submenu index="权限管理">
                     <template slot="title">
-                        <i class="el-icon-menu"></i>
+                        <i class="el-icon-view"></i>
                         <span slot="title">权限管理</span>
                     </template>
                     <!-- 二级菜单 -->
@@ -67,7 +67,7 @@
                             <span slot="title">角色管理</span>
                         </template>
                     </el-menu-item>
-                    <el-menu-item index="/rights">
+                    <el-menu-item index="/rights" @click="saveNavState('/rights')">
                         <template slot="title">
                             <i class="el-icon-menu"></i>
                             <span slot="title">权限列表</span>
@@ -75,20 +75,20 @@
                     </el-menu-item>
                 </el-submenu>
                 <!-- 一级菜单 -->
-                <el-submenu index="3">
+                <el-submenu index="授课管理">
                     <template slot="title">
-                        <i class="el-icon-menu"></i>
+                        <i class="el-icon-more"></i>
                         <span slot="title">授课管理</span>
                     </template>
                     <!-- 二级菜单 -->
                     <!-- index可以动态链接为 index="'/' + subItem.path(就是通过接口返回的path属性，例如users)" -->
-                    <el-menu-item index="/course">
+                    <el-menu-item index="/course" @click="saveNavState('/course')">
                         <template slot="title">
                             <i class="el-icon-menu"></i>
                             <span slot="title">课程管理</span>
                         </template>
                     </el-menu-item>
-                    <el-menu-item index="/class">
+                    <el-menu-item index="/class" @click="saveNavState('/class')">
                         <template slot="title">
                             <i class="el-icon-menu"></i>
                             <span slot="title">班级管理</span>
@@ -96,14 +96,14 @@
                     </el-menu-item>
                 </el-submenu>
                 <!-- 一级菜单 -->
-                <el-submenu index="4">
+                <el-submenu index="教学情况管理">
                     <template slot="title">
-                        <i class="el-icon-menu"></i>
+                        <i class="el-icon-document"></i>
                         <span slot="title">教学情况管理</span>
                     </template>
                     <!-- 二级菜单 -->
                     <!-- index可以动态链接为 index="'/' + subItem.path(就是通过接口返回的path属性，例如users)" -->
-                    <el-menu-item index="/teachingSituation">
+                    <el-menu-item index="/teachingSituation" @click="saveNavState('/teachingSituation')">
                         <template slot="title">
                             <i class="el-icon-menu"></i>
                             <span slot="title">教学情况查看</span>
@@ -111,14 +111,14 @@
                     </el-menu-item>
                 </el-submenu>
                 <!-- 一级菜单 -->
-                <el-submenu index="5">
+                <el-submenu index="用户行为管理">
                     <template slot="title">
-                        <i class="el-icon-menu"></i>
+                        <i class="el-icon-setting"></i>
                         <span slot="title">用户行为管理</span>
                     </template>
                     <!-- 二级菜单 -->
                     <!-- index可以动态链接为 index="'/' + subItem.path(就是通过接口返回的path属性，例如users)" -->
-                    <el-menu-item index="/showBurailData">
+                    <el-menu-item index="/showBurailData" @click="saveNavState('/showBurailData')">
                         <template slot="title">
                             <i class="el-icon-menu"></i>
                             <span slot="title">用户行为查看</span>
@@ -153,11 +153,14 @@ export default {
     // this.getMenuList()
     this.activePath = window.sessionStorage.getItem('activePath')
     // sessionStorage存储数据过程
-    var userInfo = { id: 1, name: 'admin123' }
-    window.sessionStorage.setItem('user', JSON.stringify(userInfo))
+    // var userInfo = { id: 1, name: 'admin123' }
+    // window.sessionStorage.setItem('user', JSON.stringify(userInfo))
     // // this.adminName = window.sessionStorage.getItem('user').name
     // var getUserInfo = JSON.parse(window.sessionStorage.getItem('user'))
     this.adminName = window.sessionStorage.getItem('username')
+    
+    
+
   },
   methods: {
     logout () {
@@ -181,6 +184,10 @@ export default {
     },
     changePassword () {
       this.$router.push('/changepwd')
+    },
+    // 点击每个subMenu项(用户管理，权限管理，授课管理，教学情况管理)调用事件
+    webPageDataBurial(key, keyPath) {
+    //   console.log(key, keyPath)
     }
   }
 }
