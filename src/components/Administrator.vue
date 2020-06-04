@@ -124,6 +124,12 @@
                             <span slot="title">用户行为查看</span>
                         </template>
                     </el-menu-item>
+                    <el-menu-item index="/showWebPageBurailData" @click="saveNavState('/showWebPageBurailData')">
+                        <template slot="title">
+                            <i class="el-icon-menu"></i>
+                            <span slot="title">页面访问查看</span>
+                        </template>
+                    </el-menu-item>
                 </el-submenu>
                 </el-menu>
             </el-aside>

@@ -422,6 +422,12 @@ export default {
 
     // 给用户行为详细内容赋值（页面统一id,module,subModule）
     // 具体operate在具体事件中指定
+    this.$global_dataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
+    this.$global_dataBurialForm.module = '用户管理'
+    this.$global_dataBurialForm.subModule = '督导管理'
+
+    // 给用户行为详细内容赋值（页面统一id,module,subModule）
+    // 具体operate在具体事件中指定
     this.$global_webPageDataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
     this.$global_webPageDataBurialForm.subModule = '督导管理页面'
     console.log('网页表单：', this.$global_webPageDataBurialForm)
@@ -560,6 +566,7 @@ export default {
       this.DefaultSelectedPermsName = ''
     },
     // 点击按钮添加新督导
+    // 埋点
     addSupervisor () {
       this.$refs.addSupervisorFormRef.validate(async valid => {
         if (!valid) return
@@ -578,6 +585,12 @@ export default {
             if (res.status === 200 && res.data.code !== 400) {
               // 隐藏添加督导的对话框
               this.addDialogVisible = false
+              // 给用户行为详细内容赋值
+              // 埋点
+              this.$global_dataBurialForm.operate = '添加督导'
+              // console.log('表单数据：', this.$global_dataBurialForm)
+              // 上报事件（上传用户行为内容）
+              this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
               return this.$message.success('添加督导成功！')
             }
           }).catch(err => {
@@ -588,6 +601,7 @@ export default {
         this.addDialogVisible = false
         // 重新获取督导列表数据
         this.getSupervisorList()
+        this.getSupervisorTotal()
       })
     },
     // p为不够10添加0的函数(为日期设置的函数)
@@ -616,9 +630,16 @@ export default {
           if (res.status !== 200) {
             return this.$message.error('删除督导失败！')
           } else {
+            // 给用户行为详细内容赋值
+            // 埋点
+            this.$global_dataBurialForm.operate = '删除督导'
+            // console.log('表单数据：', this.$global_dataBurialForm)
+            // 上报事件（上传用户行为内容）
+            this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
             console.log('删除督导成功！')
           }
           this.getSupervisorList()
+          this.getSupervisorTotal()
         }).catch(err => {
           console.log('删除督导失败！' + err)
         })
@@ -657,12 +678,16 @@ export default {
         .then(res => {
           if (res.status === 200) {
             console.log('修改督导信息成功！')
+            this.$global_dataBurialForm.operate = '编辑'
+            // 上报事件（上传用户行为内容）
+            // 埋点
+            this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
             return this.$message.success('修改督导信息成功！')
           }
         }).catch(function (err) {
           console.log('修改督导信息！失败信息： errMsg—— ' + err)
         })
-      this.editDialogVisible = false
+      this.editSupervisorInfoDialogVisible = false
     },
     // 入学时间过滤器进行筛选
     filterEntrDateHandler (value, row, column) {

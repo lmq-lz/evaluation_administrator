@@ -833,7 +833,7 @@ export default {
       this.editStudentInfoDialogVisible = true
       this.getStudentList()
     },
-    // 更新学生姓名和密码
+    // 更新学生姓名和密码（后端接口改变，更新密码功能缺失）
     async updateStudent () {
       this.editStudentNaPForm.password = this.$md5(this.editStudentNaPForm.passwordBeforeMD5)
       delete this.editStudentNaPForm.passwordBeforeMD5
@@ -841,6 +841,9 @@ export default {
         .then(res => {
           if (res.status === 200) {
             console.log('重置密码成功！')
+            this.$global_dataBurialForm.operate = '重置姓名或密码'
+            // 上报事件（上传用户行为内容）
+            this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
             return this.$message.success('更改密码成功！')
           }
         }).catch(function (err) {
@@ -865,6 +868,7 @@ export default {
       return gender === value
     },
     // 编辑(或修改)学生信息
+    // 埋点
     async updateStuInfo () {
       const dEntrance = new Date(this.editStudentInfoForm.entranceDate)
       this.editStudentInfoForm.entranceDate = dEntrance.getFullYear() + '-' + this.p((dEntrance.getMonth() + 1)) + '-' + this.p(dEntrance.getDate())
@@ -915,12 +919,18 @@ export default {
       })
     },
     // 跳转到学生基本信息页进行修改
+    // 埋点
     linkStudentInfo (student) {
       this.chosenLookCosListStuId = student.id
       const studentInfo = JSON.stringify(student.courseList)
       window.sessionStorage.setItem('studentCourseInfo', studentInfo)
       // 全局组件传递参数
       eventBus.$emit('stuId', student.id)
+      // 给用户行为详细内容赋值
+      this.$global_dataBurialForm.operate = '查看选课'
+      console.log('表单数据：', this.$global_dataBurialForm)
+      // 上报事件（上传用户行为内容）
+      this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
       this.$router.push('studentInfo')
     }
   }

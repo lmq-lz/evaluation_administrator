@@ -17,13 +17,15 @@ import ClassCourseInfo from '../components/info/ClassCourseInfo'
 import CourseTeacherInfo from '../components/info/CourseTeacherInfo'
 import TeachingSituation from '../components/teachingSituation/teachingSituation'
 
-//密码相关页面
+// 密码相关页面
 import ChangePwd from '../components/pwd/ChangePwd.vue'
 import ForgetPwd from '../components/pwd/ForgetPwd.vue'
-//查看评价详情页面
+// 查看评价详情页面
 import TeacherCourseCheck from '../components/teachingSituation/TeacherCourseCheck.vue'
-//查看埋点数据
+// 查看用户行为（按钮的点击事件）的埋点数据
 import ShowBurailData from '../components/showData/ShowBurailData'
+// 查看页面访问的埋点数据
+import ShowWebPageBurailData from '../components/showData/ShowWebPageBurailData'
 
 Vue.use(VueRouter)
 
@@ -56,10 +58,12 @@ const routes = [
       { path: '/class', component: Class },
       { path: '/teachingSituation', component: TeachingSituation },
       { path: '/teacherCourseCheck', component: TeacherCourseCheck},
-      //修改密码页面
+      // 修改密码页面
       { path: '/changepwd', component: ChangePwd},
-      //展示埋点数据页面
-      { path: '/showBurailData',name: 'showBurailData', component: ShowBurailData}
+      // 展示埋点数据页面
+      { path: '/showBurailData',name: 'showBurailData', component: ShowBurailData},
+      // 展示页面埋点数据页面
+      { path: '/showWebPageBurailData',name: 'showWebPageBurailData', component: ShowWebPageBurailData}
     ]
     // meta:
     // {

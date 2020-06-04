@@ -635,7 +635,13 @@ export default {
     this.getTeacherTotal()
     this.getTeacherList()
     this.getDepartmentList()
-        
+
+    // 给用户行为详细内容赋值（页面统一id,module,subModule）
+    // 具体operate在具体事件中指定
+    this.$global_dataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
+    this.$global_dataBurialForm.module = '用户管理'
+    this.$global_dataBurialForm.subModule = '教师管理'
+
     // 给用户行为详细内容赋值（页面统一id,module,subModule）
     // 具体operate在具体事件中指定
     this.$global_webPageDataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
@@ -643,6 +649,7 @@ export default {
     // console.log('网页表单：', this.$global_webPageDataBurialForm)
     // 上报事件（访问页面）
     this.reportDataBurial('/userBehavior/add', this.$global_webPageDataBurialForm)
+    
   },
   methods: {
     // 获取所有教师数量
@@ -800,6 +807,7 @@ export default {
       this.DefaultSelectedPermsName = ''
     },
     // 点击按钮添加新教师
+    // 埋点
     addTeacher () {
       this.$refs.addTeacherFormRef.validate(async valid => {
         // console.log(valid)
@@ -828,6 +836,12 @@ export default {
             if (res.status === 200 && res.data.code !== 400) {
               // 隐藏添加教师的对话框
               this.addDialogVisible = false
+              // 给用户行为详细内容赋值
+              // 埋点
+              this.$global_dataBurialForm.operate = '添加教师'
+              // console.log('表单数据：', this.$global_dataBurialForm)
+              // 上报事件（上传用户行为内容）
+              this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
               return this.$message.success('添加教师成功！')
             }
           }).catch(err => {
@@ -845,6 +859,7 @@ export default {
           return s < 10 ? '0' + s : s
     },
     // 根据id删除对应的教师信息
+    // 埋点
     async removeTeacherById (id) {
       // console.log('删除教师的id是：' + id)
       // 弹框询问教师是否删除数据
@@ -866,6 +881,12 @@ export default {
           if (res.status !== 200) {
             return this.$message.error('删除教师失败！')
           } else {
+            // 给用户行为详细内容赋值
+            // 埋点
+            this.$global_dataBurialForm.operate = '删除教师'
+            // console.log('表单数据：', this.$global_dataBurialForm)
+            // 上报事件（上传用户行为内容）
+            this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
             console.log('删除教师成功！')
           }
           this.getTeacherList()
@@ -873,7 +894,7 @@ export default {
           console.log('删除教师失败！' + err)
         })
     },
-    // 更新教师姓名+密码
+    // 更改教师姓名+密码
     async updateTeacher () {
       this.editTeacherNaPForm.password = this.$md5(this.editTeacherNaPForm.passwordBeforeMD5)
       // console.log('编辑教师form：', this.editTeacherNaPForm)
@@ -882,6 +903,12 @@ export default {
         .then(res => {
           if (res.status === 200) {
             console.log('重置密码成功！')
+            // 给用户行为详细内容赋值
+            // 埋点
+            this.$global_dataBurialForm.operate = '重置姓名或密码'
+            // console.log('表单数据：', this.$global_dataBurialForm)
+            // 上报事件（上传用户行为内容）
+            this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
             return this.$message.success('更改密码成功！')
           }
         }).catch(function (err) {
@@ -890,6 +917,7 @@ export default {
       this.editDialogVisible = false
     },
     // 更改教师具体信息
+    // 埋点
     async updateTeacherInfo () {
         // 入职日期的格式化
         const dEntrance = new Date(this.editTeacherInfoForm.entranceDate)
@@ -907,6 +935,10 @@ export default {
         .then(res => {
           if (res.status === 200) {
             console.log('修改教师信息成功！')
+            this.$global_dataBurialForm.operate = '编辑'
+            // 上报事件（上传用户行为内容）
+            // 埋点
+            this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
             return this.$message.success('修改教师信息成功！')
           }
         }).catch(function (err) {

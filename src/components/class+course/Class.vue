@@ -75,20 +75,20 @@
       width="40%" @close="addClassDialogClosed">
       <!-- class_id, number, name, class_type, class_class, class_dep, score, time -->
           <!-- 内容主体区域 -->
-          <el-form :model="addClassForm" :rules="addClassFormRules" ref="addClassFormRef" label-width="70px">
+          <el-form :model="addClassForm" :rules="addClassFormRules" ref="addClassFormRef" label-width="80px">
               <!-- prop是验证规则rules(即addClassFormRules)的属性 -->
               <!-- v-model数据双向绑定，同步到addClassForm -->
               <!-- <el-form-item label="班级id" prop="id">
                 <el-input v-model="addClassForm.id"></el-input>
               </el-form-item> -->
-              <el-form-item label="班级数称" prop="number">
-                  <el-input v-model="addClassForm.number"></el-input>
+              <el-form-item label="班级代码" prop="addClassFormNumber">
+                  <el-input v-model="addClassFormNumber"></el-input>
               </el-form-item>
-              <el-form-item label="班级名称" prop="name">
-                  <el-input v-model="addClassForm.name"></el-input>
+              <el-form-item label="班级名称" prop="addClassFormName">
+                  <el-input v-model="addClassFormName"></el-input>
               </el-form-item>
-              <el-form-item label="年级" prop="grade">
-                <el-input v-model="addClassForm.grade"></el-input>
+              <el-form-item label="年级" prop="addClassFormGrade">
+                <el-input v-model="addClassFormGrade"></el-input>
               </el-form-item>
               <el-form-item label="系名称">
                 <template>
@@ -116,7 +116,7 @@
       width="40%" @close="editClassDialogClosed">
       <!-- class_id, number, name, class_type, class_class, class_dep, score, time -->
           <!-- 内容主体区域 -->
-          <el-form :model="editClassForm" :rules="editClassFormRules" ref="editClassFormRef" label-width="70px">
+          <el-form :model="editClassForm" :rules="editClassFormRules" ref="editClassFormRef" label-width="80px">
               <!-- prop是验证规则rules(即editClassFormRules)的属性 -->
               <el-form-item label="班级id" prop="id">
                   <!-- v-model数据双向绑定，同步到editClassForm -->
@@ -232,6 +232,10 @@ export default {
       addClassDialogVisible: false,
       // 控制编辑班级对话框的显示与隐藏
       editClassDialogVisible: false,
+      // 以下三个变量为：突然不知道为什么addClassForm绑定有问题
+      addClassFormName: '',
+      addClassFormNumber: '',
+      addClassFormGrade: '',
       // 添加班级的表单数据
       addClassForm: {
         id: 0,
@@ -422,7 +426,7 @@ export default {
       var isDeleteOperateSuccess = false
       // 如果点击确定，confirmResult返回值为字符串 confirm，点击取消返回值为字符串 cancel
       if (confirmResult !== 'confirm') {
-        return this.$message.info('已取消删除！123')
+        return this.$message.info('已取消删除！')
       }
       await this.$http.delete('/classe/deleteClass/{id}?id=' + id)
         .then(res => {
@@ -442,11 +446,14 @@ export default {
   
       // 删除操作成功就向后端上报此事件
       // 埋点
-      if(this.isDeleteOperateSuccess) {
-        this.$global_dataBurialForm.operate = '删除课程'
-        // 上报事件（上传用户行为内容）
-        this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
-      }
+      // if(this.isDeleteOperateSuccess) {
+      //   this.$global_dataBurialForm.operate = '删除课程'
+      //   // 上报事件（上传用户行为内容）
+      //   this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+      // }
+      this.$global_dataBurialForm.operate = '删除班级'
+      // 上报事件（上传用户行为内容）
+      this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
     },
     // 监听添加班级对话框的关闭事件
     addClassDialogClosed () {
@@ -468,18 +475,26 @@ export default {
     addClass () {
       // 判断添加事件是否执行成功
       var isAddOperateSuccess = false
+      this.addClassForm.name = this.addClassFormName
+      this.addClassForm.number = this.addClassFormNumber
+      this.addClassForm.grade = this.addClassFormGrade
       this.$refs.addClassFormRef.validate(async valid => {
         if (!valid) return
         console.log('添加班级的信息：', this.addClassForm)
         await this.$http.post('/classe/addClass', this.addClassForm)
           .then(res => {
             // code为400表示参数出错，违反数据完整性
-            if (res.data.code === '400') {
+            if (res.data.code === 400) {
               console.log(res.data.msg + ',' + res.data.info)
             } else {
               // 请求返回状态码是200，表示成功
-              if (res.status === '200') {
+              if (res.status === 200) {
                 this.isAddOperateSuccess = true
+                // 给用户行为详细内容赋值
+                this.$global_dataBurialForm.operate = '添加班级'
+                console.log('表单数据：', this.$global_dataBurialForm)
+                // 上报事件（上传用户行为内容）
+                this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
                 return this.$message.success('添加班级成功！')
               }
             }
@@ -489,15 +504,6 @@ export default {
       })
       // 隐藏添加班级对话框
       this.addClassDialogVisible = false
-      // 添加操作成功就向后端上报此事件
-      // 埋点
-      if(this.isAddOperateSuccess) {
-        // 给用户行为详细内容赋值
-        this.$global_dataBurialForm.operate = '添加班级'
-        console.log('表单数据：', this.$global_dataBurialForm)
-        // 上报事件（上传用户行为内容）
-        this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
-      }
       // 重新获取班级列表
       this.getClassTotal()
       this.getClassList()
@@ -522,13 +528,17 @@ export default {
       this.editClassDialogVisible = false
       // 添加操作成功就向后端上报此事件
       // 埋点
-      if(this.isUpdateOperateSuccess) {
-        this.$global_dataBurialForm.operate = '编辑班级'
-        // 上报事件（上传用户行为内容）
-        this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
-        this.getClassList()
-      }
-      this.getStudentList()
+      // if(this.isUpdateOperateSuccess) {
+      //   this.$global_dataBurialForm.operate = '编辑班级'
+      //   // 上报事件（上传用户行为内容）
+      //   this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+      //   this.getClassList()
+      // }
+      this.$global_dataBurialForm.operate = '编辑班级'
+      // 上报事件（上传用户行为内容）
+      this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+      this.getClassList()
+      // this.getStudentList()
     },
     // 选中值发生变化时触发
     change () {

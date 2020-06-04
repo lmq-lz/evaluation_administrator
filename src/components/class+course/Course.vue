@@ -362,6 +362,12 @@ export default {
     
     // 给用户行为详细内容赋值（页面统一id,module,subModule）
     // 具体operate在具体事件中指定
+    this.$global_dataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
+    this.$global_dataBurialForm.module = '授课管理'
+    this.$global_dataBurialForm.subModule = '课程管理'
+
+    // 给用户行为详细内容赋值（页面统一id,module,subModule）
+    // 具体operate在具体事件中指定
     this.$global_webPageDataBurialForm.id = JSON.parse(window.sessionStorage.getItem('user')).id
     this.$global_webPageDataBurialForm.subModule = '课程管理页面'
     console.log('网页表单：', this.$global_webPageDataBurialForm)
@@ -429,6 +435,7 @@ export default {
       this.getCourseList()
     },
     // 通过课程id删除课程
+    // 埋点
     async deleteCourse (id) {
       // 弹框询问是否删除课程数据
       const confirmResult = await this.$confirm('此操作将永久删除该课程, 是否继续?', '提示', {
@@ -448,6 +455,11 @@ export default {
           if (res.status !== 200) {
             return this.$message.error('删除课程失败！')
           } else {
+            // 删除操作成功就向后端上报此事件
+            // 埋点
+            this.$global_dataBurialForm.operate = '删除课程'
+            // 上报事件（上传用户行为内容）
+            this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
             console.log(res.message + '删除课程成功！')
           }
         })
@@ -469,33 +481,40 @@ export default {
       this.editCourseForm = course
     },
     // 点击按钮添加课程
+    // 埋点
     async addCourse () {
-      // alert('课程名：' + this.addCourseForm.name)
-      // this.$refs.addCourseFormRef.validate(async valid => {
-      //   if (!valid) return
-        
-      // })
       console.log('添加课程info：', this.addCourseForm)
       await this.$http.post('/courseManage/addCourse', this.addCourseForm)
         .then(res => {
-          return this.$message.success('添加课程成功！')
+          if (res.status === 200) {
+            // 给用户行为详细内容赋值
+            this.$global_dataBurialForm.operate = '添加课程'
+            console.log('表单数据：', this.$global_dataBurialForm)
+            // 上报事件（上传用户行为内容）
+            this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
+            return this.$message.success('添加课程成功！')
+          }
         }).catch(err => {
           console.log('添加课程失败！' + err)
         })
       // 隐藏添加课程对话框
       this.addCourseDialogVisible = false
       // 重新获取课程列表
+      this.getCourseTotal()
       this.getCourseList()
     },
     // 修改课程
     async updateCourse () {
       await this.$http.put('/courseManage/updateCourse', this.editCourseForm)
         .then(function (response) {
-          // 重新获取课程列表
-          this.getCourseList()
+          console.log('修改课程信息成功！')
         }).catch(function (err) {
           console.log('编辑课程请求失败 errMsg：' + err)
         })
+      // 给用户行为详细内容赋值
+      this.$global_dataBurialForm.operate = '编辑课程'
+      // 上报事件（上传用户行为内容）
+      this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
       // 刷新课程
       this.getCourseList()
       // 关闭编辑课程对话框
@@ -513,6 +532,12 @@ export default {
       // console.log('stringfy stuCourseList:', studentInfo)
       const courseName = JSON.stringify(courseTeacherInfo.name)
       window.sessionStorage.setItem('courseName', courseName)
+      // 给用户行为详细内容赋值
+      // 埋点
+      this.$global_dataBurialForm.operate = '查看选课'
+      console.log('表单数据：', this.$global_dataBurialForm)
+      // 上报事件（上传用户行为内容）
+      this.reportDataBurial('/userBehavior/add', this.$global_dataBurialForm)
       // 路由跳转到开课情况界面
       this.$router.push('courseTeacherInfo')
       // 全局组件传递参数
